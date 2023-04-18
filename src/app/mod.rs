@@ -3,7 +3,7 @@ mod route;
 mod services;
 
 use yew::prelude::*;
-use yew_router::prelude::*;
+use yew_router::{navigator, prelude::*};
 
 use crate::app::route::*;
 
@@ -52,11 +52,29 @@ impl yew::Component for Main {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
+        let mut tree = huiwen::Node::new();
+        tree.insert("painting".to_string());
+
+        let menu_switch = {
+            Callback::from(move |key: String| {
+                let location = web_sys::window()
+                    .unwrap()
+                    .document()
+                    .unwrap()
+                    .location()
+                    .unwrap();
+                let _ = match key.as_str() {
+                    "painting" => location.replace("/"),
+                    _ => location.replace("/404"),
+                };
+            })
+        };
+
         html! {
             <div class={"main"}>
                 <div class={"header"}>{"Huiwen"}</div>
                 <div class={"content"}>
-                    <div class={"menu"}>{"这是目录"}</div>
+                    <huiwen::Menu {tree} switch={menu_switch} />
                     <BrowserRouter><Switch<Route> render={switch} /></BrowserRouter>
                 </div>
             </div>
