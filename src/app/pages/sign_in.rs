@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use yew::Callback;
 use yew_router::prelude::*;
 
 use crate::app::services;
@@ -12,6 +13,7 @@ pub enum Msg {
 
 pub(crate) struct SignInPage {
     user_id: String,
+    error: String,
 }
 
 impl yew::Component for SignInPage {
@@ -21,7 +23,8 @@ impl yew::Component for SignInPage {
 
     fn create(_ctx: &yew::Context<Self>) -> Self {
         Self {
-            user_id: String::new(),
+            user_id: "".to_string(),
+            error: "".to_string(),
         }
     }
 
@@ -34,18 +37,6 @@ impl yew::Component for SignInPage {
             let password = password.clone();
             yew::Callback::from(move |_| {
                 link.send_future(Self::register(password.borrow().clone()))
-            })
-        };
-
-        let sign_in = {
-            let link = ctx.link().clone();
-            let user_id = user_id.clone();
-            let password = password.clone();
-            yew::Callback::from(move |_| {
-                link.send_future(Self::sign_in(
-                    user_id.borrow().clone(),
-                    password.borrow().clone(),
-                ));
             })
         };
 
@@ -65,23 +56,34 @@ impl yew::Component for SignInPage {
             })
         };
 
+        let close = {
+            let link = ctx.link().clone();
+            Callback::from(move |_| link.send_message(Msg::Error(String::new())))
+        };
+
         yew::html! {
             <div class={"page center-container"}>
-                <div style={"width: 62%;background: white;padding: 3em;"}>
+                <form class={"box content"} method={"post"} action={services::create_token_url("/")}>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"User ID"}</div>
-                        <huiwen::Input value={self.user_id.clone()} update={input_user_id}></huiwen::Input>
+                        <huiwen::Input name={"id"} value={self.user_id.clone()} update={input_user_id}></huiwen::Input>
                     </div>
+                    <input type={"hidden"} name={"name"} />
                     <br/>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"Password"}</div>
-                        <huiwen::Input update={input_password}></huiwen::Input>
+                        <huiwen::Input name={"password"} r#type={"password"} update={input_password}></huiwen::Input>
                     </div>
                     <div style={"display: flex;justify-content: space-around;margin: 2em 0 0 0;"}>
                         <huiwen::Button onclick={register}>{"Register"}</huiwen::Button>
-                        <huiwen::Button onclick={sign_in}>{"Sign in"}</huiwen::Button>
+                        <input type={"submit"} value={"Sign in"} />
                     </div>
-                </div>
+                </form>
+                if !self.error.is_empty() {
+                    <huiwen::Modal classes={""} {close}>
+                        <div class={"content"}>{self.error.clone()}</div>
+                    </huiwen::Modal>
+                }
             </div>
         }
     }
@@ -93,12 +95,12 @@ impl yew::Component for SignInPage {
                 false
             }
             Msg::Error(e) => {
-                log::info!("{e}");
+                self.error = e;
                 true
             }
             Msg::SetUserId(user_id) => {
                 self.user_id = user_id;
-                true
+                false
             }
         }
     }

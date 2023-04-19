@@ -18,7 +18,7 @@ body {
     display: flex;
     flex-direction: column;
 
-    .header {
+    >.main-header {
         @extend .importance-first;
 
         width: 100%;
@@ -30,7 +30,7 @@ body {
         text-align: center;
     }
 
-    .content {
+    >.main-content {
         @extend .importance-second;
 
         width: 100%;
@@ -38,15 +38,17 @@ body {
 
         display: flex;
 
-        .menu {
+        >.menu {
             width: 12em;
             height: 100%;
             border-right: 1px solid black;
         }
 
-        .page {
+        >.page {
             flex: 1;
             height: 100%;
+
+            position: relative;
         }
     }
 }
@@ -76,6 +78,29 @@ body {
     width: 100%;
     height: 100%;
     margin: 0;
+}
+
+.content {
+    padding: 1em;
+    background-color: white;
+}
+
+.modal-bk {
+    @extend .center-container;
+
+    width: 100%;
+    height: 100%;
+
+    position: absolute;
+    background-color: rgba(0.5, 0.5, 0.5, 0.5);
+}
+
+.box {
+    width: 62%;
+
+    border-radius: 6px;
+
+    background: white;
 }
 
 .importance-first {

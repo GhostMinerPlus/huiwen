@@ -4,6 +4,7 @@ use yew::prelude::*;
 
 #[derive(Clone, Debug, Properties, PartialEq)]
 pub struct InputProps {
+    pub name: String,
     /// The controlled value of this form element.
     #[prop_or_default]
     pub value: String,
@@ -15,53 +16,49 @@ pub struct InputProps {
     /// The placeholder value for this component.
     #[prop_or_default]
     pub placeholder: String,
-    /// Use rounded appearance.
-    #[prop_or_default]
-    pub rounded: bool,
-    /// Display a loading spinner within this component.
-    #[prop_or_default]
-    pub loading: bool,
     /// Disable this component.
     #[prop_or_default]
     pub disabled: bool,
-    /// Make this component read-only.
+    // Type
     #[prop_or_default]
-    pub readonly: bool,
-    /// Make this component static.
-    #[prop_or_default]
-    pub r#static: bool,
+    pub r#type: String,
 }
 
-/// A text input element.
-///
-/// [https://bulma.io/documentation/form/input/](https://bulma.io/documentation/form/input/)
-///
-/// All YBC form components are controlled components. This means that the value of the field must
-/// be provided from a parent component, and changes to this component are propagated to the parent
-/// component via callback.
-#[function_component(Input)]
-pub fn input(props: &InputProps) -> Html {
-    let class = classes!(
-        "input",
-        props.classes.clone(),
-        props.rounded.then_some("is-rounded"),
-        props.loading.then_some("is-loading"),
-        props.r#static.then_some("is-static"),
-    );
-    let oninput = props.update.reform(|ev: web_sys::InputEvent| {
-        let input: HtmlInputElement = ev
-            .target_dyn_into()
-            .expect_throw("event target should be an input");
-        input.value()
-    });
-    html! {
-        <input
-            value={props.value.clone()}
-            {oninput}
-            {class}
-            placeholder={props.placeholder.clone()}
-            disabled={props.disabled}
-            readonly={props.readonly}
-            />
+pub struct Input {}
+
+impl yew::Component for Input {
+    type Message = ();
+
+    type Properties = InputProps;
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let props = ctx.props();
+        let class = classes!(
+            "input",
+            props.classes.clone(),
+        );
+
+        let oninput = props.update.reform(|ev: web_sys::InputEvent| {
+            let input: HtmlInputElement = ev
+                .target_dyn_into()
+                .expect_throw("event target should be an input");
+            input.value()
+        });
+
+        html! {
+            <input
+                name={props.name.clone()}
+                value={props.value.clone()}
+                {oninput}
+                {class}
+                type={props.r#type.clone()}
+                placeholder={props.placeholder.clone()}
+                disabled={props.disabled}
+                />
+        }
     }
 }

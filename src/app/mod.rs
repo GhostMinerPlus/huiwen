@@ -72,8 +72,8 @@ impl yew::Component for Main {
 
         html! {
             <div class={"main"}>
-                <div class={"header"}>{"Huiwen"}</div>
-                <div class={"content"}>
+                <div class={"main-header"}>{"Huiwen"}</div>
+                <div class={"main-content"}>
                     <huiwen::Menu {tree} switch={menu_switch} />
                     <BrowserRouter><Switch<Route> render={switch} /></BrowserRouter>
                 </div>

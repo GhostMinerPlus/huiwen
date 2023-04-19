@@ -25,6 +25,14 @@ pub(crate) async fn create_user(name: &str, password: &str) -> Result<String, Js
     }
 }
 
+pub(crate) fn create_token_url(url: &str) -> String {
+    format!(
+        "service/{}/mirror/system/create_token/{}",
+        encode_uri_component(&App::get_app().mirror),
+        encode_uri_component(url)
+    )
+}
+
 pub(crate) async fn create_token(user_id: &str, password: &str) -> Result<String, JsValue> {
     let mut req = huiwen::Request::new(&format!(
         "service/{}/mirror/system/create_token",
