@@ -66,23 +66,23 @@ impl yew::Component for SignInPage {
                 <form class={"box content"} method={"post"} action={services::create_token_url("/")}>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"User ID"}</div>
-                        <huiwen::Input name={"id"} value={self.user_id.clone()} update={input_user_id}></huiwen::Input>
+                        <views::Input name={"id"} value={self.user_id.clone()} update={input_user_id}></views::Input>
                     </div>
                     <input type={"hidden"} name={"name"} />
                     <br/>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"Password"}</div>
-                        <huiwen::Input name={"password"} r#type={"password"} update={input_password}></huiwen::Input>
+                        <views::Input name={"password"} r#type={"password"} update={input_password}></views::Input>
                     </div>
                     <div style={"display: flex;justify-content: space-around;margin: 2em 0 0 0;"}>
-                        <huiwen::Button onclick={register}>{"Register"}</huiwen::Button>
+                        <views::Button onclick={register}>{"Register"}</views::Button>
                         <input type={"submit"} value={"Sign in"} />
                     </div>
                 </form>
                 if !self.error.is_empty() {
-                    <huiwen::Modal classes={""} {close}>
+                    <views::Modal classes={""} {close}>
                         <div class={"content"}>{self.error.clone()}</div>
-                    </huiwen::Modal>
+                    </views::Modal>
                 }
             </div>
         }

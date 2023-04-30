@@ -52,7 +52,7 @@ impl yew::Component for Main {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-        let mut tree = huiwen::Node::new();
+        let mut tree = views::Node::new();
         tree.insert("painting".to_string());
 
         let menu_switch = {
@@ -74,7 +74,7 @@ impl yew::Component for Main {
             <div class={"main"}>
                 <div class={"main-header"}>{"Huiwen"}</div>
                 <div class={"main-content"}>
-                    <huiwen::Menu {tree} switch={menu_switch} />
+                    <views::Menu {tree} switch={menu_switch} />
                     <BrowserRouter><Switch<Route> render={switch} /></BrowserRouter>
                 </div>
             </div>

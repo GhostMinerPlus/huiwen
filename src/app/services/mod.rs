@@ -5,7 +5,7 @@ use wasm_bindgen_futures::JsFuture;
 use super::App;
 
 pub(crate) async fn create_user(name: &str, password: &str) -> Result<String, JsValue> {
-    let mut req = huiwen::Request::new(&format!(
+    let mut req = views::Request::new(&format!(
         "service/{}/mirror/system/create_user",
         encode_uri_component(&App::get_app().mirror)
     ));
@@ -34,7 +34,7 @@ pub(crate) fn create_token_url(url: &str) -> String {
 }
 
 pub(crate) async fn create_token(user_id: &str, password: &str) -> Result<String, JsValue> {
-    let mut req = huiwen::Request::new(&format!(
+    let mut req = views::Request::new(&format!(
         "service/{}/mirror/system/create_token",
         encode_uri_component(&App::get_app().mirror)
     ));
@@ -55,7 +55,7 @@ pub(crate) async fn create_token(user_id: &str, password: &str) -> Result<String
 }
 
 pub(crate) async fn get_user_id() -> Result<String, JsValue> {
-    let req = huiwen::Request::new(&format!(
+    let req = views::Request::new(&format!(
         "service/{}/mirror/system/get_user_id",
         encode_uri_component(&App::get_app().mirror)
     ));

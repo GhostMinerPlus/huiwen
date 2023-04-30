@@ -1055,6 +1055,7 @@ dependencies = [
  "ndarray",
  "painting",
  "serde",
+ "views",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2248,6 +2249,28 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "views"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "js-sys",
+ "log",
+ "ndarray",
+ "painting",
+ "serde",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
+ "winit",
+ "yew",
+ "yew-router",
+]
 
 [[package]]
 name = "waker-fn"

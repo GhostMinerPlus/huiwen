@@ -29,7 +29,7 @@ impl yew::Component for CanvasPage {
     fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <div class={"page"}>
-                <huiwen::Canvas />
+                <views::Canvas />
             </div>
         }
     }
