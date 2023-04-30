@@ -3,7 +3,7 @@ mod route;
 mod services;
 
 use yew::prelude::*;
-use yew_router::{navigator, prelude::*};
+use yew_router::prelude::*;
 
 use crate::app::route::*;
 
@@ -16,7 +16,7 @@ impl App {
     fn new() -> Self {
         Self {
             name: "".to_string(),
-            mirror: "http://[2409:8a55:356a:7d81:2ca0:42b3:5937:2]:8080".to_string(),
+            mirror: "http://[2409:8a55:34b2:6940:6c77:9b8f:1715:a592]:8080".to_string(),
         }
     }
 }

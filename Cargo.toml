@@ -1,9 +1,3 @@
-[workspace]
-member = [
-    ".",
-    "./painting"
-]
-
 [package]
 name = "huiwen"
 version = "0.1.0"

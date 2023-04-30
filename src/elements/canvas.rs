@@ -12,6 +12,10 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+pub enum Message {
+    Init(EventLoop<()>),
+}
+
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
 pub struct Props {
     #[prop_or_default]
@@ -20,32 +24,19 @@ pub struct Props {
 
 pub struct Canvas {
     canvas: yew::NodeRef,
-    p_canvas: Rc<RefCell<Option<painting::Canvas>>>,
-    window: Rc<RefCell<Option<Window>>>,
-    pen: painting::tools::Pen,
+    p_canvas: Rc<RefCell<Option<RawCanvas>>>,
 }
 
 impl yew::Component for Canvas {
-    type Message = ();
+    type Message = Message;
 
     type Properties = Props;
 
-    fn create(ctx: &yew::Context<Self>) -> Self {
+    fn create(_ctx: &yew::Context<Self>) -> Self {
         let canvas = yew::NodeRef::default();
         let p_canvas = Rc::new(RefCell::new(None));
-        let window = Rc::new(RefCell::new(None));
-        ctx.link().send_future({
-            let canvas = canvas.clone();
-            let p_canvas = p_canvas.clone();
-            let window = window.clone();
-            Self::init(canvas, window, p_canvas)
-        });
-        Self {
-            canvas,
-            p_canvas,
-            window,
-            pen: painting::tools::Pen::new(),
-        }
+
+        Self { canvas, p_canvas }
     }
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
@@ -56,8 +47,6 @@ impl yew::Component for Canvas {
         let onmousedown = {
             let canvas = self.canvas.clone();
             let p_canvas = self.p_canvas.clone();
-            let window = self.window.clone();
-            let pen = self.pen.clone();
             yew::Callback::from(move |e: MouseEvent| unsafe {
                 PAINTING = true;
 
@@ -74,8 +63,6 @@ impl yew::Component for Canvas {
                         .client_height() as u32,
                 );
 
-                let mut binding = p_canvas.borrow_mut();
-                let canvas = binding.as_mut().unwrap();
                 let force = {
                     let v = cgmath::Vector2::new(
                         (e.movement_x() as f32) / (sz.width as f32),
@@ -90,38 +77,33 @@ impl yew::Component for Canvas {
                         force
                     }
                 };
-                canvas.start_line(pen.px2point(
+                let mut binding = p_canvas.borrow_mut();
+                let raw_canvas = binding.as_mut().unwrap();
+                raw_canvas.canvas.start_line(raw_canvas.pen.px2point(
                     e.offset_x() as f32,
                     e.offset_y() as f32,
                     force,
                     sz,
                 ));
-                let mut window_binding = window.borrow_mut();
-                let window = window_binding.as_mut().unwrap();
-                window.request_redraw();
+                raw_canvas.window.request_redraw();
             })
         };
 
         let onmouseup = {
             let p_canvas = self.p_canvas.clone();
-            let window = self.window.clone();
             yew::Callback::from(move |_| unsafe {
                 PAINTING = false;
 
                 let mut binding = p_canvas.borrow_mut();
-                let canvas = binding.as_mut().unwrap();
-                canvas.end_line();
-                let mut window_binding = window.borrow_mut();
-                let window = window_binding.as_mut().unwrap();
-                window.request_redraw();
+                let raw_canvas = binding.as_mut().unwrap();
+                raw_canvas.canvas.end_line();
+                raw_canvas.window.request_redraw();
             })
         };
 
         let onmousemove = {
             let canvas = self.canvas.clone();
             let p_canvas = self.p_canvas.clone();
-            let window = self.window.clone();
-            let pen = self.pen.clone();
             yew::Callback::from(move |e: MouseEvent| unsafe {
                 if PAINTING {
                     let sz = PhysicalSize::new(
@@ -137,8 +119,6 @@ impl yew::Component for Canvas {
                             .client_height() as u32,
                     );
 
-                    let mut binding = p_canvas.borrow_mut();
-                    let canvas = binding.as_mut().unwrap();
                     let force = {
                         let v = cgmath::Vector2::new(
                             (e.movement_x() as f32) / (sz.width as f32),
@@ -153,15 +133,15 @@ impl yew::Component for Canvas {
                             force
                         }
                     };
-                    canvas.push_point(pen.px2point(
+                    let mut binding = p_canvas.borrow_mut();
+                    let raw_canvas = binding.as_mut().unwrap();
+                    raw_canvas.canvas.push_point(raw_canvas.pen.px2point(
                         e.offset_x() as f32,
                         e.offset_y() as f32,
                         force,
                         sz,
                     ));
-                    let mut window_binding = window.borrow_mut();
-                    let window = window_binding.as_mut().unwrap();
-                    window.request_redraw();
+                    raw_canvas.window.request_redraw();
                 }
             })
         };
@@ -169,8 +149,6 @@ impl yew::Component for Canvas {
         let onpointerdown = {
             let canvas = self.canvas.clone();
             let p_canvas = self.p_canvas.clone();
-            let window = self.window.clone();
-            let pen = self.pen.clone();
             yew::Callback::from(move |e: PointerEvent| unsafe {
                 PAINTING = true;
 
@@ -188,8 +166,8 @@ impl yew::Component for Canvas {
                 );
 
                 let mut binding = p_canvas.borrow_mut();
-                let canvas = binding.as_mut().unwrap();
-                canvas.start_line(pen.px2point(
+                let raw_canvas = binding.as_mut().unwrap();
+                raw_canvas.canvas.start_line(raw_canvas.pen.px2point(
                     e.offset_x() as f32,
                     e.offset_y() as f32,
                     if e.pointer_type() == "touch" {
@@ -199,32 +177,25 @@ impl yew::Component for Canvas {
                     },
                     sz,
                 ));
-                let mut window_binding = window.borrow_mut();
-                let window = window_binding.as_mut().unwrap();
-                window.request_redraw();
+                raw_canvas.window.request_redraw();
             })
         };
 
         let onpointerup = {
             let p_canvas = self.p_canvas.clone();
-            let window = self.window.clone();
             yew::Callback::from(move |_| unsafe {
                 PAINTING = false;
 
                 let mut binding = p_canvas.borrow_mut();
-                let canvas = binding.as_mut().unwrap();
-                canvas.end_line();
-                let mut window_binding = window.borrow_mut();
-                let window = window_binding.as_mut().unwrap();
-                window.request_redraw();
+                let raw_canvas = binding.as_mut().unwrap();
+                raw_canvas.canvas.end_line();
+                raw_canvas.window.request_redraw();
             })
         };
 
         let onpointermove = {
             let canvas = self.canvas.clone();
             let p_canvas = self.p_canvas.clone();
-            let window = self.window.clone();
-            let pen = self.pen.clone();
             yew::Callback::from(move |e: PointerEvent| unsafe {
                 if PAINTING {
                     let sz = PhysicalSize::new(
@@ -241,8 +212,8 @@ impl yew::Component for Canvas {
                     );
 
                     let mut binding = p_canvas.borrow_mut();
-                    let canvas = binding.as_mut().unwrap();
-                    canvas.push_point(pen.px2point(
+                    let raw_canvas = binding.as_mut().unwrap();
+                    raw_canvas.canvas.push_point(raw_canvas.pen.px2point(
                         e.offset_x() as f32,
                         e.offset_y() as f32,
                         if e.pointer_type() == "touch" {
@@ -252,9 +223,7 @@ impl yew::Component for Canvas {
                         },
                         sz,
                     ));
-                    let mut window_binding = window.borrow_mut();
-                    let window = window_binding.as_mut().unwrap();
-                    window.request_redraw();
+                    raw_canvas.window.request_redraw();
                 }
             })
         };
@@ -270,16 +239,49 @@ impl yew::Component for Canvas {
             </canvas>
         }
     }
+
+    fn update(&mut self, _ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Self::Message::Init(event_loop) => {
+                let canvas = self.canvas.clone();
+                let p_canvas = self.p_canvas.clone();
+                event_loop.spawn(move |event, target, control_flow| {
+                    let mut binding = p_canvas.borrow_mut();
+                    let raw_canvas = binding.as_mut().unwrap();
+                    raw_canvas.on_event(canvas.clone(), event, target, control_flow);
+                });
+                true
+            }
+        }
+    }
+
+    fn rendered(&mut self, ctx: &yew::Context<Self>, first_render: bool) {
+        if first_render {
+            if self.p_canvas.borrow().is_some() {
+                return;
+            }
+
+            let canvas = self.canvas.clone();
+            let p_canvas = self.p_canvas.clone();
+            ctx.link().send_future(async move {
+                let event_loop = EventLoop::new();
+                let raw_canvas = RawCanvas::create(canvas.clone(), &event_loop).await;
+                p_canvas.replace(Some(raw_canvas));
+                Self::Message::Init(event_loop)
+            });
+        }
+    }
 }
 
-impl Canvas {
-    async fn init(
-        n_canvas: yew::NodeRef,
-        p_window: Rc<RefCell<Option<Window>>>,
-        p_canvas: Rc<RefCell<Option<painting::Canvas>>>,
-    ) {
+struct RawCanvas {
+    canvas: painting::Canvas,
+    window: Window,
+    pen: painting::tools::Pen,
+}
+
+impl RawCanvas {
+    async fn create(n_canvas: yew::NodeRef, event_loop: &EventLoop<()>) -> Self {
         let sz = PhysicalSize::new(1024, 1024);
-        let event_loop = EventLoop::new();
         let window = {
             let window = WindowBuilder::new()
                 .with_canvas(n_canvas.cast())
@@ -288,12 +290,22 @@ impl Canvas {
             window.set_inner_size(sz);
             window
         };
+        n_canvas
+            .cast::<HtmlCanvasElement>()
+            .as_ref()
+            .unwrap()
+            .style()
+            .set_css_text("");
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             dx12_shader_compiler: Default::default(),
         });
+        log::info!("instance: {:?}", instance);
+
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
+        log::info!("surface: {:?}", surface);
+
         let mut canvas = painting::Canvas::new(&instance, surface, window.inner_size()).await;
         canvas.start_line(painting::Point {
             pos: [0., 0., 0.].into(),
@@ -311,55 +323,37 @@ impl Canvas {
             color: [0., 0., 1., 1.],
         });
         canvas.end_line();
-
-        n_canvas
-            .cast::<HtmlCanvasElement>()
-            .as_ref()
-            .unwrap()
-            .style()
-            .set_css_text("");
         canvas.redraw();
-        p_canvas.replace(Some(canvas));
-        p_window.replace(Some(window));
-        event_loop.spawn(move |event, target, control_flow| {
-            Self::on_event(
-                n_canvas.clone(),
-                p_window.clone(),
-                p_canvas.clone(),
-                event,
-                target,
-                control_flow,
-            );
-        });
+
+        Self {
+            canvas,
+            window,
+            pen: painting::tools::Pen::new(),
+        }
     }
 
     fn on_event(
+        &mut self,
         n_canvas: yew::NodeRef,
-        window: Rc<RefCell<Option<Window>>>,
-        p_canvas: Rc<RefCell<Option<painting::Canvas>>>,
         event: Event<()>,
-        _: &EventLoopWindowTarget<()>,
+        _target: &EventLoopWindowTarget<()>,
         control_flow: &mut ControlFlow,
     ) {
-        let mut window_binding = window.borrow_mut();
-        let window = window_binding.as_mut().unwrap();
-        let mut binding = p_canvas.borrow_mut();
-        let canvas = binding.as_mut().unwrap();
         match event {
             Event::WindowEvent {
                 ref event,
                 window_id,
-            } if window_id == window.id() => match event {
-                WindowEvent::Resized(physical_size) => canvas.resize(*physical_size),
+            } if window_id == self.window.id() => match event {
+                WindowEvent::Resized(physical_size) => self.canvas.resize(*physical_size),
                 WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                    canvas.resize(**new_inner_size)
+                    self.canvas.resize(**new_inner_size)
                 }
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => {
                     *control_flow = ControlFlow::Exit
                 }
                 _ => {}
             },
-            Event::RedrawRequested(window_id) if window_id == window.id() => {
+            Event::RedrawRequested(window_id) if window_id == self.window.id() => {
                 let sz = PhysicalSize::new(
                     n_canvas
                         .cast::<HtmlCanvasElement>()
@@ -372,8 +366,9 @@ impl Canvas {
                         .unwrap()
                         .client_height() as u32,
                 );
-                canvas.set_aspect((sz.width as f32) / (sz.height as f32));
-                canvas.redraw();
+                self.canvas
+                    .set_aspect((sz.width as f32) / (sz.height as f32));
+                self.canvas.redraw();
             }
             _ => {}
         }

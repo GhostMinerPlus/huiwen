@@ -1,5 +1,3 @@
-pub mod logger;
-
 use std::collections::BTreeMap;
 
 use wasm_bindgen::{JsCast, JsValue};
