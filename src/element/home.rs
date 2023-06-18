@@ -5,6 +5,7 @@ use crate::{route, service};
 
 pub(crate) enum Msg {
     Nothing,
+    SignIn,
     NeedSign,
 }
 
@@ -20,7 +21,7 @@ impl yew::Component for CanvasPage {
             ctx.link().send_future({
                 async move {
                     match service::create_token(&auth.name, &auth.password).await {
-                        Ok(_) => Msg::Nothing,
+                        Ok(_) => Msg::SignIn,
                         Err(_) => Msg::NeedSign,
                     }
                 }
@@ -53,6 +54,11 @@ impl yew::Component for CanvasPage {
             Msg::NeedSign => {
                 let navigator = ctx.link().navigator().unwrap();
                 navigator.push(&route::Route::SignIn);
+                false
+            }
+            Msg::SignIn => {
+                let navigator = ctx.link().navigator().unwrap();
+                navigator.push(&route::Route::Home);
                 false
             }
         }
