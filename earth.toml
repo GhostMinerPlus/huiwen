@@ -1,0 +1,7 @@
+name = "Huiwen"
+domain = "[::]:8081"
+path = "/huiwen"
+src = "./dist"
+
+[proxies]
+"/mirror" = "http://[::1]:8080/mirror"

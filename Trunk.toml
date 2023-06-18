@@ -10,10 +10,3 @@ all_features = false
 # pattern_script = None
 # pattern_preload = None
 # pattern_params = None
-
-[serve]
-address = "::1"
-port = 8081
-
-[[proxy]]
-backend = "http://[::1]:8080/mirror/"

@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use js_sys::encode_uri_component;
 use serde::Deserialize;
 use yew::Callback;
 use yew_router::prelude::*;
@@ -69,7 +70,7 @@ impl yew::Component for SignInPage {
 
         yew::html! {
             <div class={"page center-container"}>
-                <form class={"box content"} method={"get"} action={"/huiwen"}>
+                <form class={"box content"} method={"post"} action={format!("/mirror/system/create_token/{}/{}", encode_uri_component("/huiwen"), encode_uri_component("/huiwen/sign_in"))}>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"User Name"}</div>
                         <views::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></views::Input>
