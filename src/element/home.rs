@@ -1,6 +1,7 @@
+use serde::Deserialize;
 use yew_router::prelude::*;
 
-use crate::app::{route, services};
+use crate::{route, service};
 
 pub(crate) enum Msg {
     Nothing,
@@ -15,14 +16,26 @@ impl yew::Component for CanvasPage {
     type Properties = ();
 
     fn create(ctx: &yew::Context<Self>) -> Self {
-        ctx.link().send_future({
-            async move {
-                if let Err(_) = services::get_user_id().await {
-                    return Msg::NeedSign;
+        if let Ok(auth) = ctx.link().location().unwrap().query::<Auth>() {
+            ctx.link().send_future({
+                async move {
+                    match service::create_token(&auth.name, &auth.password).await {
+                        Ok(_) => Msg::Nothing,
+                        Err(_) => Msg::NeedSign,
+                    }
                 }
-                Msg::Nothing
-            }
-        });
+            });
+        } else {
+            ctx.link().send_future({
+                async move {
+                    match service::get_user_name().await {
+                        Ok(_) => Msg::Nothing,
+                        Err(_) => Msg::NeedSign,
+                    }
+                }
+            });
+        }
+
         Self {}
     }
 
@@ -44,4 +57,10 @@ impl yew::Component for CanvasPage {
             }
         }
     }
+}
+
+#[derive(Deserialize)]
+struct Auth {
+    name: String,
+    password: String,
 }

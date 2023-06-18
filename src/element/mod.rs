@@ -1,44 +1,10 @@
-mod pages;
-mod route;
-mod services;
+pub(crate) mod sign_in;
+pub(crate) mod home;
 
-use yew::prelude::*;
-use yew_router::prelude::*;
+use yew::{Context, Html, Callback, html};
+use yew_router::{BrowserRouter, Switch};
 
-use crate::app::route::*;
-
-pub(crate) struct App {
-    name: String,
-    mirror: String,
-}
-
-impl App {
-    fn new() -> Self {
-        Self {
-            name: "".to_string(),
-            mirror: "http://[2409:8a55:34b2:6940:6c77:9b8f:1715:a592]:8080".to_string(),
-        }
-    }
-}
-
-static mut APP: Option<App> = None;
-
-impl App {
-    pub(crate) fn start_app() {
-        unsafe {
-            APP = Some(App::new());
-            APP.as_mut().unwrap().run();
-        }
-    }
-
-    pub(crate) fn get_app() -> &'static App {
-        unsafe { APP.as_ref().unwrap() }
-    }
-
-    fn run(&mut self) {
-        yew::Renderer::<Main>::new().render();
-    }
-}
+use crate::route::*;
 
 pub(crate) struct Main {}
 
@@ -64,7 +30,7 @@ impl yew::Component for Main {
                     .location()
                     .unwrap();
                 let _ = match key.as_str() {
-                    "painting" => location.replace("/"),
+                    "painting" => location.replace("/huiwen"),
                     _ => location.replace("/404"),
                 };
             })

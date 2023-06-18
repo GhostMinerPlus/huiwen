@@ -1,4 +1,0 @@
-name = "huiwen"
-domain = "[::]:8081"
-path = ""
-src = "dist"
