@@ -1,4 +1,4 @@
-name = "huiwen"
-domain = "[::]:8081"
-path = ""
-src = "dist"
+name = "Huiwen"
+domain = "[::]:80"
+path = "/huiwen"
+src = "./dist"
