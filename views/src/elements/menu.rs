@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use web_sys::HtmlElement;
 use yew::prelude::*;
-use yew_router::scope_ext::RouterScopeExt;
 
 #[derive(Debug)]
 pub struct Node {

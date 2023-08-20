@@ -1,18 +1,20 @@
 use std::{cell::RefCell, rc::Rc};
 
+use js_sys::encode_uri_component;
+use serde::Deserialize;
 use yew::Callback;
 use yew_router::prelude::*;
 
-use crate::app::services;
+use crate::service;
 
 pub enum Msg {
-    Success,
+    Nothing,
     Error(String),
     SetUserId(String),
 }
 
 pub(crate) struct SignInPage {
-    user_id: String,
+    user_name: String,
     error: String,
 }
 
@@ -21,15 +23,20 @@ impl yew::Component for SignInPage {
 
     type Properties = ();
 
-    fn create(_ctx: &yew::Context<Self>) -> Self {
+    fn create(ctx: &yew::Context<Self>) -> Self {
+        let mut error = "".to_string();
+        if let Ok(err_msg) = ctx.link().location().unwrap().query::<ErrMsg>() {
+            error = err_msg.msg;
+        }
+
         Self {
-            user_id: "".to_string(),
-            error: "".to_string(),
+            user_name: "".to_string(),
+            error,
         }
     }
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
-        let user_id: Rc<RefCell<String>> = Rc::new(RefCell::new(self.user_id.clone()));
+        let user_name: Rc<RefCell<String>> = Rc::new(RefCell::new(self.user_name.clone()));
         let password: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
 
         let register = {
@@ -40,11 +47,11 @@ impl yew::Component for SignInPage {
             })
         };
 
-        let input_user_id = {
+        let input_user_name = {
             let link = ctx.link().clone();
-            let user_id = user_id.clone();
+            let user_name = user_name.clone();
             yew::Callback::from(move |v: String| {
-                *user_id.borrow_mut() = v.clone();
+                *user_name.borrow_mut() = v.clone();
                 link.send_message(Msg::SetUserId(v));
             })
         };
@@ -63,61 +70,55 @@ impl yew::Component for SignInPage {
 
         yew::html! {
             <div class={"page center-container"}>
-                <form class={"box content"} method={"post"} action={services::create_token_url("/")}>
+                <form class={"box content"} method={"post"} action={format!("/portal/user/token?success={}&error={}", encode_uri_component("/huiwen"), encode_uri_component("/huiwen/sign_in"))}>
                     <div style={"display: flex;justify-content: center;"}>
-                        <div style={"width: 6em;color: black;text-align: left;"}>{"User ID"}</div>
-                        <huiwen::Input name={"id"} value={self.user_id.clone()} update={input_user_id}></huiwen::Input>
+                        <div style={"width: 6em;color: black;text-align: left;"}>{"User Name"}</div>
+                        <views::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></views::Input>
                     </div>
-                    <input type={"hidden"} name={"name"} />
                     <br/>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"Password"}</div>
-                        <huiwen::Input name={"password"} r#type={"password"} update={input_password}></huiwen::Input>
+                        <views::Input name={"password"} r#type={"password"} update={input_password}></views::Input>
                     </div>
                     <div style={"display: flex;justify-content: space-around;margin: 2em 0 0 0;"}>
-                        <huiwen::Button onclick={register}>{"Register"}</huiwen::Button>
+                        <views::Button onclick={register}>{"Register"}</views::Button>
                         <input type={"submit"} value={"Sign in"} />
                     </div>
                 </form>
                 if !self.error.is_empty() {
-                    <huiwen::Modal classes={""} {close}>
+                    <views::Modal classes={""} {close}>
                         <div class={"content"}>{self.error.clone()}</div>
-                    </huiwen::Modal>
+                    </views::Modal>
                 }
             </div>
         }
     }
 
-    fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::Success => {
-                ctx.link().navigator().unwrap().back();
-                false
-            }
             Msg::Error(e) => {
                 self.error = e;
                 true
             }
-            Msg::SetUserId(user_id) => {
-                self.user_id = user_id;
+            Msg::SetUserId(user_name) => {
+                self.user_name = user_name;
                 false
             }
+            Msg::Nothing => false,
         }
     }
 }
 
 impl SignInPage {
     async fn register(password: String) -> Msg {
-        match services::create_user("", &password).await {
-            Ok(o) => Self::sign_in(o, password).await,
+        match service::user_create("", &password).await {
+            Ok(_) => Msg::Nothing,
             Err(e) => Msg::Error(e.as_string().unwrap_or("unknown error".to_string())),
         }
     }
+}
 
-    async fn sign_in(user_id: String, password: String) -> Msg {
-        match services::create_token(&user_id, &password).await {
-            Ok(_) => Msg::Success,
-            Err(e) => Msg::Error(e.as_string().unwrap_or("unknown error".to_string())),
-        }
-    }
+#[derive(Deserialize)]
+struct ErrMsg {
+    msg: String,
 }
