@@ -8,7 +8,7 @@ use yew_router::prelude::*;
 use crate::service;
 
 pub enum Msg {
-    Success,
+    Nothing,
     Error(String),
     SetUserId(String),
 }
@@ -70,7 +70,7 @@ impl yew::Component for SignInPage {
 
         yew::html! {
             <div class={"page center-container"}>
-                <form class={"box content"} method={"post"} action={format!("/mirror/system/create_token/{}/{}", encode_uri_component("/huiwen"), encode_uri_component("/huiwen/sign_in"))}>
+                <form class={"box content"} method={"post"} action={format!("/portal/user/token?success={}&error={}", encode_uri_component("/huiwen"), encode_uri_component("/huiwen/sign_in"))}>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"User Name"}</div>
                         <views::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></views::Input>
@@ -94,12 +94,8 @@ impl yew::Component for SignInPage {
         }
     }
 
-    fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::Success => {
-                ctx.link().navigator().unwrap().back();
-                false
-            }
             Msg::Error(e) => {
                 self.error = e;
                 true
@@ -108,21 +104,15 @@ impl yew::Component for SignInPage {
                 self.user_name = user_name;
                 false
             }
+            Msg::Nothing => false,
         }
     }
 }
 
 impl SignInPage {
     async fn register(password: String) -> Msg {
-        match service::create_user("", &password).await {
-            Ok(o) => Self::sign_in(o, password).await,
-            Err(e) => Msg::Error(e.as_string().unwrap_or("unknown error".to_string())),
-        }
-    }
-
-    async fn sign_in(user_name: String, password: String) -> Msg {
-        match service::create_token(&user_name, &password).await {
-            Ok(_) => Msg::Success,
+        match service::user_create("", &password).await {
+            Ok(_) => Msg::Nothing,
             Err(e) => Msg::Error(e.as_string().unwrap_or("unknown error".to_string())),
         }
     }

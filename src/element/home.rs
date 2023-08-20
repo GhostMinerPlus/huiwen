@@ -17,7 +17,7 @@ impl yew::Component for CanvasPage {
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future({
             async move {
-                match service::get_user_name().await {
+                match service::user_name().await {
                     Ok(_) => Msg::Nothing,
                     Err(_) => Msg::NeedSign,
                 }
