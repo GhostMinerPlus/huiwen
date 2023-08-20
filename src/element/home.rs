@@ -1,6 +1,6 @@
 use yew_router::prelude::*;
 
-use crate::app::{route, services};
+use crate::{route, service};
 
 pub(crate) enum Msg {
     Nothing,
@@ -17,19 +17,20 @@ impl yew::Component for CanvasPage {
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future({
             async move {
-                if let Err(_) = services::get_user_id().await {
-                    return Msg::NeedSign;
+                match service::user_name().await {
+                    Ok(_) => Msg::Nothing,
+                    Err(_) => Msg::NeedSign,
                 }
-                Msg::Nothing
             }
         });
+
         Self {}
     }
 
     fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <div class={"page"}>
-                <huiwen::Canvas />
+                <views::Canvas />
             </div>
         }
     }

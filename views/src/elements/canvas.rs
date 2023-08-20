@@ -14,6 +14,7 @@ use winit::{
 
 pub enum Message {
     Init(EventLoop<()>),
+    None,
 }
 
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
@@ -252,6 +253,7 @@ impl yew::Component for Canvas {
                 });
                 true
             }
+            Message::None => false,
         }
     }
 
@@ -265,7 +267,13 @@ impl yew::Component for Canvas {
             let p_canvas = self.p_canvas.clone();
             ctx.link().send_future(async move {
                 let event_loop = EventLoop::new();
-                let raw_canvas = RawCanvas::create(canvas.clone(), &event_loop).await;
+                let raw_canvas = match RawCanvas::create(canvas.clone(), &event_loop).await {
+                    Ok(o) => o,
+                    Err(e) => {
+                        log::error!("failed to build raw_canvas: {:?}", e);
+                        return Self::Message::None;
+                    }
+                };
                 p_canvas.replace(Some(raw_canvas));
                 Self::Message::Init(event_loop)
             });
@@ -280,7 +288,7 @@ struct RawCanvas {
 }
 
 impl RawCanvas {
-    async fn create(n_canvas: yew::NodeRef, event_loop: &EventLoop<()>) -> Self {
+    async fn create(n_canvas: yew::NodeRef, event_loop: &EventLoop<()>) -> Result<Self, String> {
         let sz = PhysicalSize::new(1024, 1024);
         let window = {
             let window = WindowBuilder::new()
@@ -306,7 +314,7 @@ impl RawCanvas {
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
         log::info!("surface: {:?}", surface);
 
-        let mut canvas = painting::Canvas::new(&instance, surface, window.inner_size()).await;
+        let mut canvas = painting::Canvas::create(&instance, surface, window.inner_size()).await?;
         canvas.start_line(painting::Point {
             pos: [0., 0., 0.].into(),
             width: 0.1,
@@ -325,11 +333,11 @@ impl RawCanvas {
         canvas.end_line();
         canvas.redraw();
 
-        Self {
+        Ok(Self {
             canvas,
             window,
             pen: painting::tools::Pen::new(),
-        }
+        })
     }
 
     fn on_event(
