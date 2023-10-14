@@ -9,6 +9,7 @@ pub struct InputProps {
     #[prop_or_default]
     pub value: String,
     /// The callback to be used for propagating changes to this element's value.
+    #[prop_or_default]
     pub update: Callback<String>,
 
     #[prop_or_default]
