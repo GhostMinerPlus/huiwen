@@ -1,6 +1,6 @@
 use yew_router::prelude::*;
 
-use crate::{route, service};
+use crate::{api, app::route, engine};
 
 pub(crate) enum Msg {
     Nothing,
@@ -17,7 +17,7 @@ impl yew::Component for CanvasPage {
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future({
             async move {
-                match service::user_name().await {
+                match api::check().await {
                     Ok(_) => Msg::Nothing,
                     Err(_) => Msg::NeedSign,
                 }
@@ -30,7 +30,11 @@ impl yew::Component for CanvasPage {
     fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <div class={"page"}>
+<<<<<<<< Updated upstream:src/element/home.rs
                 <views::Canvas />
+========
+                <engine::Canvas />
+>>>>>>>> Stashed changes:src/app/page/home.rs
             </div>
         }
     }

@@ -4,7 +4,7 @@ pub(crate) mod home;
 use yew::{Context, Html, Callback, html};
 use yew_router::{BrowserRouter, Switch};
 
-use crate::route::*;
+use crate::{app::route::*, engine};
 
 pub(crate) struct Main {}
 
@@ -18,7 +18,11 @@ impl yew::Component for Main {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
+<<<<<<<< Updated upstream:src/element/mod.rs
         let mut tree = views::Node::new();
+========
+        let mut tree = engine::Node::new();
+>>>>>>>> Stashed changes:src/app/page/mod.rs
         tree.insert("painting".to_string());
 
         let menu_switch = {
@@ -40,7 +44,11 @@ impl yew::Component for Main {
             <div class={"main"}>
                 <div class={"main-header"}>{"Huiwen"}</div>
                 <div class={"main-content"}>
+<<<<<<<< Updated upstream:src/element/mod.rs
                     <views::Menu {tree} switch={menu_switch} />
+========
+                    <engine::Menu {tree} switch={menu_switch} />
+>>>>>>>> Stashed changes:src/app/page/mod.rs
                     <BrowserRouter><Switch<Route> render={switch} /></BrowserRouter>
                 </div>
             </div>

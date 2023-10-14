@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::element::{home::CanvasPage, sign_in::SignInPage};
+use crate::app::page::{home::CanvasPage, sign_in::SignInPage};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
