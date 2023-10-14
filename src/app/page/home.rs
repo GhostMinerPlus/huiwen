@@ -30,11 +30,7 @@ impl yew::Component for CanvasPage {
     fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <div class={"page"}>
-<<<<<<<< Updated upstream:src/element/home.rs
-                <views::Canvas />
-========
                 <engine::Canvas />
->>>>>>>> Stashed changes:src/app/page/home.rs
             </div>
         }
     }
