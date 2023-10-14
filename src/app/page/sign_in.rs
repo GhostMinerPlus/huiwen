@@ -74,39 +74,22 @@ impl yew::Component for SignInPage {
                     <input type={"hidden"} name={"success"} value={"/huiwen"} />
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"User Name"}</div>
-<<<<<<<< Updated upstream:src/element/sign_in.rs
-                        <views::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></views::Input>
-========
                         <engine::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></engine::Input>
->>>>>>>> Stashed changes:src/app/page/sign_in.rs
                     </div>
                     <br/>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"Password"}</div>
-<<<<<<<< Updated upstream:src/element/sign_in.rs
-                        <views::Input name={"password"} r#type={"password"} update={input_password}></views::Input>
-                    </div>
-                    <div style={"display: flex;justify-content: space-around;margin: 2em 0 0 0;"}>
-                        <views::Button onclick={register}>{"Register"}</views::Button>
-========
                         <engine::Input name={"password"} r#type={"password"} update={input_password}></engine::Input>
                     </div>
                     <div style={"display: flex;justify-content: space-around;margin: 2em 0 0 0;"}>
                         <engine::Button onclick={register}>{"Register"}</engine::Button>
->>>>>>>> Stashed changes:src/app/page/sign_in.rs
                         <input type={"submit"} value={"Sign in"} />
                     </div>
                 </form>
                 if !self.error.is_empty() {
-<<<<<<<< Updated upstream:src/element/sign_in.rs
-                    <views::Modal classes={""} {close}>
-                        <div class={"content"}>{self.error.clone()}</div>
-                    </views::Modal>
-========
                     <engine::Modal classes={""} {close}>
                         <div class={"content"}>{self.error.clone()}</div>
                     </engine::Modal>
->>>>>>>> Stashed changes:src/app/page/sign_in.rs
                 }
             </div>
         }
