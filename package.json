@@ -1,0 +1,15 @@
+{
+    "name": "hiwen",
+    "version": "1.0.0",
+    "main": "src/index.js",
+    "type": "module",
+    "scripts": {
+        "serve": "node src/index.js"
+    },
+    "author": "ghostminer <1696415745@qq.com>",
+    "license": "MIT",
+    "dependencies": {
+        "moon": "git+https://github.com/GhostMinerPlus/moon.git#master",
+        "node-rsa": "^1.1.1"
+    }
+}
