@@ -1,8 +1,5 @@
-from light:v0.1.0
+from light:v0.1.1
 
-copy earth.toml /
 copy dist/ /dist/
-
-expose 80
 
 cmd ["/bin/light"]
