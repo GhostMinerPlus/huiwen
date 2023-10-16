@@ -1,7 +1,4 @@
 name = "Huiwen"
-domain = "0.0.0.0:8080"
+domain = "[::]:80"
 path = "/huiwen"
 src = "./dist"
-
-[proxy]
-"mirror" = "http://10.96.139.166:9000/mirror"

@@ -1,13 +1,12 @@
 import api from "../api/index.js";
 import engine from "moon";
 
+const root = document.getElementById("root");
+
 const self = {
     __init: async () => {
         await engine.__init(api);
-
-        const root = document.getElementById("root");
-
-        root.innerText = await engine.execute(["add", "1", "1"]);
+        root.innerText = "操你慧群";
     }
 };
 

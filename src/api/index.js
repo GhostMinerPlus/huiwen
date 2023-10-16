@@ -1,6 +1,80 @@
+import node_rsa from 'node-rsa';
+
 import config from "./config.js";
 
 const atom_method = {
+    insert: {
+        fn: async arg_v => {
+            const fn = arg_v[0];
+            const id = arg_v[1];
+            const val = arg_v[2];
+
+            await surreal.query(
+                `insert into ${fn} { id: $id, val: $val } on duplicate key update val = $val`,
+                { id, val }
+            );
+            return fn;
+        },
+        len: 3
+    },
+    delete: {
+        fn: async arg_v => {
+            const fn = arg_v[0];
+            const id = arg_v[1];
+
+            await surreal.query(
+                `delete ${fn} where meta::id(id) = $id`,
+                { id }
+            );
+            return id;
+        },
+        len: 2
+    },
+    remove: {
+        fn: async arg_v => {
+            const fn = arg_v[0];
+
+            await surreal.query(
+                `remove table ${fn}`
+            );
+            return fn;
+        },
+        len: 1
+    },
+    watch: {
+        fn: async arg_v => {
+            const id = arg_v[0];
+            if (id === "fn") {
+                let rs = await surreal.query(
+                    "info for db"
+                );
+                const fn_mp = rs[0].result.tables;
+                const r = {}
+                for (const fn in fn_mp) {
+                    r[fn] = fn;
+                }
+                for (const fn in atom_method) {
+                    r[fn] = fn;
+                }
+                return r;
+            }
+
+            const atom = atom_method[arg_v[0]];
+            if (atom) {
+                return arg_v[0];
+            }
+
+            const rs = await surreal.query(
+                `select meta::id(id) as id, val from ${arg_v[0]}`
+            );
+            const r = {};
+            for (const route of rs[0].result) {
+                r[route.id] = route.val;
+            }
+            return r;
+        },
+        len: 1
+    },
     add: {
         fn: async arg_v => {
             return (new Number(arg_v[0]) + new Number(arg_v[1])).toString();
@@ -126,10 +200,38 @@ const atom_method = {
                 }
             }
 
-            throw new Error("what fuck");
-            // return left;
+            let rs = await surreal.query(
+                `select value val from ${left} where meta::id(id) = $id`,
+                { id: right }
+            );
+
+            if (rs[0].result[0]) {
+                left = rs[0].result[0];
+            } else {
+                rs = await surreal.query(
+                    `select value val from ${left} where meta::id(id) = "?"`
+                );
+                left = rs[0].result[0] ? rs[0].result[0] : "";
+            }
+            return left;
         },
         len: 2
+    },
+    encrypt: {
+        fn: async arg_v => {
+            const data = arg_v[0];
+            const encrypter = new node_rsa(config.public_key);
+            return encrypter.encrypt(data, 'base64');
+        },
+        len: 1
+    },
+    decrypt: {
+        fn: async arg_v => {
+            const data = arg_v[0];
+            const decrypter = new node_rsa(config.private_key);
+            return decrypter.decrypt(data, 'utf8');
+        },
+        len: 1
     }
 };
 

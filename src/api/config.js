@@ -1,5 +1,6 @@
 const self = {
-    __init: async () => { }
+    __init: async () => { },
+    public_key: ``,
 };
 
 export default self;

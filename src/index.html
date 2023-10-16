@@ -9,7 +9,13 @@
 
 <body>
   <div id="root"></div>
-  <script src="./index.js"></script>
+  <script type="module">
+    import app from "./app.js";
+
+    (async function () {
+      await app.__init();
+    })();
+  </script>
 </body>
 
 </html>
