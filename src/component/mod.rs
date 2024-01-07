@@ -1,5 +1,5 @@
 mod button;
-pub use button::*;
-
 mod modal;
+
+pub use button::*;
 pub use modal::*;

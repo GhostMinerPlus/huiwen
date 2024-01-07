@@ -1,9 +1,7 @@
 mod canvas;
-pub use canvas::*;
-
 mod input;
-pub use input::*;
-
-
 mod menu;
+
+pub use canvas::*;
+pub use input::*;
 pub use menu::*;

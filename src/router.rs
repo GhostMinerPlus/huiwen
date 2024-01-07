@@ -1,14 +1,12 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::app::page::{home::CanvasPage, sign_in::SignInPage};
+use crate::*;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
     #[at("/huiwen")]
     Home,
-    #[at("/huiwen/sign_in")]
-    SignIn,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -16,10 +14,9 @@ pub enum Route {
 
 pub fn switch(route: Route) -> Html {
     match route {
-        Route::Home => html! { <CanvasPage /> },
-        Route::SignIn => html! { <SignInPage /> },
+        Route::Home => html! { <page::CanvasPage /> },
         Route::NotFound => html! {
-            <div>{"???"}</div>
+            <div>{"404"}</div>
         },
     }
 }
