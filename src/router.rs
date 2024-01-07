@@ -5,7 +5,7 @@ use crate::*;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
-    #[at("/huiwen")]
+    #[at("/")]
     Home,
     #[not_found]
     #[at("/404")]

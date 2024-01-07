@@ -26,6 +26,7 @@ impl yew::Component for Main {
             .base_uri()
             .unwrap()
             .unwrap();
+        
         Self { base_url }
     }
 
@@ -43,7 +44,7 @@ impl yew::Component for Main {
                     .location()
                     .unwrap();
                 let _ = match key.as_str() {
-                    "home" => location.replace(&format!("{base_url}")),
+                    "painting" => location.replace(&format!("{base_url}")),
                     _ => location.replace(&format!("{base_url}404")),
                 };
             })

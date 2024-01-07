@@ -44,45 +44,7 @@ impl RawCanvas {
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
         log::info!("surface: {:?}", surface);
 
-        let mut canvas = painting::Canvas::create(&instance, surface, window.inner_size()).await?;
-
-        let line_v = moon::execute(json::array![["watch", "line"]]).unwrap();
-        for i in 0..line_v.len() {
-            let line = &line_v[i.to_string().as_str()];
-            let pt = &line["0"];
-            canvas.start_line(painting::Point {
-                pos: cgmath::Point3 {
-                    x: pt["pos"]["x"].as_str().unwrap().parse().unwrap(),
-                    y: pt["pos"]["y"].as_str().unwrap().parse().unwrap(),
-                    z: pt["pos"]["z"].as_str().unwrap().parse().unwrap(),
-                },
-                color: [
-                    pt["color"]["r"].as_str().unwrap().parse().unwrap(),
-                    pt["color"]["g"].as_str().unwrap().parse().unwrap(),
-                    pt["color"]["b"].as_str().unwrap().parse().unwrap(),
-                    pt["color"]["a"].as_str().unwrap().parse().unwrap(),
-                ],
-                width: pt["width"].as_str().unwrap().parse().unwrap(),
-            });
-            for j in 1..line.len() {
-                let pt = &line[j.to_string().as_str()];
-                canvas.push_point(painting::Point {
-                    pos: cgmath::Point3 {
-                        x: pt["pos"]["x"].as_str().unwrap().parse().unwrap(),
-                        y: pt["pos"]["y"].as_str().unwrap().parse().unwrap(),
-                        z: pt["pos"]["z"].as_str().unwrap().parse().unwrap(),
-                    },
-                    color: [
-                        pt["color"]["r"].as_str().unwrap().parse().unwrap(),
-                        pt["color"]["g"].as_str().unwrap().parse().unwrap(),
-                        pt["color"]["b"].as_str().unwrap().parse().unwrap(),
-                        pt["color"]["a"].as_str().unwrap().parse().unwrap(),
-                    ],
-                    width: pt["width"].as_str().unwrap().parse().unwrap(),
-                });
-            }
-            canvas.end_line();
-        }
+        let canvas = painting::Canvas::create(&instance, surface, window.inner_size()).await?;
 
         Ok(Self {
             canvas,
@@ -136,58 +98,26 @@ impl RawCanvas {
 
 impl painting::Frame for RawCanvas {
     fn redraw(&mut self) {
-        let _ = moon::execute(json::array![["redraw"]]);
         self.canvas.redraw();
     }
 
     fn push_point(&mut self, pt: painting::Point) {
-        let _ = moon::execute(json::array![["push_point", {
-            "width": format!("{}", pt.width),
-            "pos": {
-                "x": format!("{}", pt.pos.x),
-                "y": format!("{}", pt.pos.y),
-                "z": format!("{}", pt.pos.z)
-            },
-            "color": {
-                "r": format!("{}", pt.color[0]),
-                "g": format!("{}", pt.color[1]),
-                "b": format!("{}", pt.color[2]),
-                "a": format!("{}", pt.color[3])
-            }
-        }]]);
         self.canvas.push_point(pt);
     }
 
     fn start_line(&mut self, pt: painting::Point) {
-        let _ = moon::execute(json::array![["start_line", {
-            "width": format!("{}", pt.width),
-            "pos": {
-                "x": format!("{}", pt.pos.x),
-                "y": format!("{}", pt.pos.y),
-                "z": format!("{}", pt.pos.z)
-            },
-            "color": {
-                "r": format!("{}", pt.color[0]),
-                "g": format!("{}", pt.color[1]),
-                "b": format!("{}", pt.color[2]),
-                "a": format!("{}", pt.color[3])
-            }
-        }]]);
         self.canvas.start_line(pt);
     }
 
     fn end_line(&mut self) {
-        let _ = moon::execute(json::array![["end_line"]]);
         self.canvas.end_line();
     }
 
     fn cancle_line(&mut self) {
-        let _ = moon::execute(json::array![["cancle_line"]]);
         self.canvas.cancle_line();
     }
 
     fn set_aspect(&mut self, aspect: f32) {
-        let _ = moon::execute(json::array![["set_aspect", format!("{aspect}")]]);
         self.canvas.set_aspect(aspect);
     }
 }

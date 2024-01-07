@@ -12,7 +12,6 @@ categories = ["gui", "wasm", "web-programming"]
 [dependencies]
 ndarray = "0.15.6"
 winit = "0.28.3"
-env_logger = "0.10.0"
 log = "0.4.17"
 
 wasm-bindgen = "0.2.84"
@@ -31,8 +30,6 @@ serde = "1.0.159"
 async-std = "1.12.0"
 
 painting = { git = "https://github.com/GhostMinerPlus/painting.git", features = ["webgl"] }
-moon = { git = "https://github.com/GhostMinerPlus/moon.git" }
-json = "0.12.4"
 
 [dependencies.web-sys]
 version = "0.3.61"
