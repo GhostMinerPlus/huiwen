@@ -1,6 +1,6 @@
 use yew_router::prelude::*;
 
-use crate::{api, app::route, engine};
+use crate::{api, app::{route, self}};
 
 pub(crate) enum Msg {
     Nothing,
@@ -30,7 +30,7 @@ impl yew::Component for CanvasPage {
     fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <div class={"page"}>
-                <engine::Canvas />
+                <app::Canvas />
             </div>
         }
     }

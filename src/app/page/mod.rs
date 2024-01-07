@@ -4,7 +4,7 @@ pub(crate) mod home;
 use yew::{Context, Html, Callback, html};
 use yew_router::{BrowserRouter, Switch};
 
-use crate::{app::route::*, engine};
+use crate::app::{route::*, self};
 
 pub(crate) struct Main {}
 
@@ -18,7 +18,7 @@ impl yew::Component for Main {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-        let mut tree = engine::Node::new();
+        let mut tree = app::Node::new();
         tree.insert("painting".to_string());
 
         let menu_switch = {
@@ -40,7 +40,7 @@ impl yew::Component for Main {
             <div class={"main"}>
                 <div class={"main-header"}>{"Huiwen"}</div>
                 <div class={"main-content"}>
-                    <engine::Menu {tree} switch={menu_switch} />
+                    <app::Menu {tree} switch={menu_switch} />
                     <BrowserRouter><Switch<Route> render={switch} /></BrowserRouter>
                 </div>
             </div>

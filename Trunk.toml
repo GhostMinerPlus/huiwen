@@ -1,12 +1,2 @@
 [build]
-# target = None
-release = false
-# dist = None
 public_url = "/huiwen/"
-no_default_features = false
-all_features = false
-# features = None
-# filehash = None
-# pattern_script = None
-# pattern_preload = None
-# pattern_params = None

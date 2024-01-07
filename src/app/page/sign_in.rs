@@ -5,7 +5,7 @@ use serde::Deserialize;
 use yew::Callback;
 use yew_router::prelude::*;
 
-use crate::{api, engine};
+use crate::{api, app};
 
 pub enum Msg {
     Nothing,
@@ -74,22 +74,22 @@ impl yew::Component for SignInPage {
                     <input type={"hidden"} name={"success"} value={"/huiwen"} />
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"User Name"}</div>
-                        <engine::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></engine::Input>
+                        <app::Input name={"name"} value={self.user_name.clone()} update={input_user_name}></app::Input>
                     </div>
                     <br/>
                     <div style={"display: flex;justify-content: center;"}>
                         <div style={"width: 6em;color: black;text-align: left;"}>{"Password"}</div>
-                        <engine::Input name={"password"} r#type={"password"} update={input_password}></engine::Input>
+                        <app::Input name={"password"} r#type={"password"} update={input_password}></app::Input>
                     </div>
                     <div style={"display: flex;justify-content: space-around;margin: 2em 0 0 0;"}>
-                        <engine::Button onclick={register}>{"Register"}</engine::Button>
+                        <app::Button onclick={register}>{"Register"}</app::Button>
                         <input type={"submit"} value={"Sign in"} />
                     </div>
                 </form>
                 if !self.error.is_empty() {
-                    <engine::Modal classes={""} {close}>
+                    <app::Modal classes={""} {close}>
                         <div class={"content"}>{self.error.clone()}</div>
-                    </engine::Modal>
+                    </app::Modal>
                 }
             </div>
         }
