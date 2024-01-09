@@ -1,7 +1,0 @@
-name = "Huiwen"
-ip = "[::]"
-port = 8082
-path = "/huiwen"
-
-[proxy]
-"/service/edge" = "http://[::1]:8080/edge"
