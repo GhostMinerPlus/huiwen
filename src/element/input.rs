@@ -38,10 +38,7 @@ impl yew::Component for Input {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let props = ctx.props();
-        let class = classes!(
-            "input",
-            props.classes.clone(),
-        );
+        let class = classes!("input", props.classes.clone(),);
 
         let oninput = props.update.reform(|ev: web_sys::InputEvent| {
             let input: HtmlInputElement = ev

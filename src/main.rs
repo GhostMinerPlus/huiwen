@@ -26,7 +26,7 @@ impl yew::Component for Main {
             .base_uri()
             .unwrap()
             .unwrap();
-        
+
         Self { base_url }
     }
 
