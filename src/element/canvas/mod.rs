@@ -1,7 +1,7 @@
 mod raw_canvas;
 
 use cgmath::*;
-use painting::Frame;
+use painting::AsPainter;
 
 use std::sync::{Arc, Mutex};
 

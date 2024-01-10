@@ -1,4 +1,6 @@
-use painting::Frame;
+use std::io;
+
+use painting::AsPainter;
 use web_sys::HtmlCanvasElement;
 use winit::{
     dpi::PhysicalSize,
@@ -11,14 +13,14 @@ use winit::{
 pub struct RawCanvas {
     canvas: painting::Canvas,
     pub window: Window,
-    pub pen: painting::tools::Pen,
+    pub pen: painting::point::Pen,
 }
 
 impl RawCanvas {
     pub async fn create(
         n_canvas: yew::NodeRef,
         event_loop: &EventLoop<()>,
-    ) -> Result<Self, String> {
+    ) -> io::Result<Self> {
         let sz = PhysicalSize::new(1024, 1024);
         let window = {
             let window = WindowBuilder::new()
@@ -49,7 +51,7 @@ impl RawCanvas {
         Ok(Self {
             canvas,
             window,
-            pen: painting::tools::Pen::new(),
+            pen: painting::point::Pen::new(),
         })
     }
 
@@ -96,16 +98,16 @@ impl RawCanvas {
     }
 }
 
-impl painting::Frame for RawCanvas {
+impl painting::AsPainter for RawCanvas {
     fn redraw(&mut self) {
         self.canvas.redraw();
     }
 
-    fn push_point(&mut self, pt: painting::Point) {
+    fn push_point(&mut self, pt: painting::point::Point) {
         self.canvas.push_point(pt);
     }
 
-    fn start_line(&mut self, pt: painting::Point) {
+    fn start_line(&mut self, pt: painting::point::Point) {
         self.canvas.start_line(pt);
     }
 
