@@ -1,3 +1,5 @@
+@import 'color.scss';
+
 * {
     box-sizing: border-box;
     overflow: hidden;
@@ -18,7 +20,7 @@ body {
     display: flex;
     flex-direction: column;
 
-    >.main-header {
+    >.header {
         @extend .importance-first;
 
         width: 100%;
@@ -30,7 +32,7 @@ body {
         text-align: center;
     }
 
-    >.main-content {
+    >.content {
         @extend .importance-second;
 
         width: 100%;
@@ -101,16 +103,4 @@ body {
     border-radius: 6px;
 
     background: white;
-}
-
-.importance-first {
-    background: linear-gradient(to bottom right, #444444, #009a5b);
-}
-
-.importance-second {
-    background: linear-gradient(to bottom right, #444444, indianred);
-}
-
-.importance-third {
-    background-color: aqua;
 }

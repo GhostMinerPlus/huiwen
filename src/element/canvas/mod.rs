@@ -155,7 +155,7 @@ impl yew::Component for Canvas {
         });
 
         yew::html! {
-            <canvas ref={self.canvas.clone()} class={props.classes.clone()}
+            <canvas ref={self.canvas.clone()} class={props.classes.clone()} width={1024} height={1024}
                 {onmousedown}
                 {onmouseup}
                 {onmousemove}
