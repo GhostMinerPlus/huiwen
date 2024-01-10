@@ -2,6 +2,7 @@ mod raw_canvas;
 
 use cgmath::*;
 use painting::AsPainter;
+use yew::classes;
 
 use std::sync::{Arc, Mutex};
 
@@ -155,14 +156,16 @@ impl yew::Component for Canvas {
         });
 
         yew::html! {
-            <canvas ref={self.canvas.clone()} class={props.classes.clone()} width={1024} height={1024}
-                {onmousedown}
-                {onmouseup}
-                {onmousemove}
-                {onpointerdown}
-                {onpointerup}
-                {onpointermove}>
-            </canvas>
+            <div class={"content"}>
+                <canvas ref={self.canvas.clone()} class={classes!("content", props.classes.clone())}
+                    {onmousedown}
+                    {onmouseup}
+                    {onmousemove}
+                    {onpointerdown}
+                    {onpointerup}
+                    {onpointermove}>
+                </canvas>
+            </div>
         }
     }
 

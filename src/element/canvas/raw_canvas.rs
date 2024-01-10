@@ -21,7 +21,7 @@ impl RawCanvas {
         n_canvas: yew::NodeRef,
         event_loop: &EventLoop<()>,
     ) -> io::Result<Self> {
-        let sz = PhysicalSize::new(1024, 1024);
+        let sz = PhysicalSize::new(2048, 2048);
         let window = {
             let window = WindowBuilder::new()
                 .with_canvas(n_canvas.cast())

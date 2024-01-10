@@ -96,7 +96,7 @@ impl yew::Component for Menu {
         html! {
             <aside {class}>
                 {for props.tree.clone().into_iter().map(|(k, _)| {
-                    html!{<div class={"node"} onclick={onclick.clone()}>{k}</div>}
+                    html!{<div class={"menu-node"} onclick={onclick.clone()}>{k}</div>}
                 })}
             </aside>
         }

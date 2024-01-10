@@ -1,0 +1,100 @@
+
+* {
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.main {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.main-header {
+    @extend .importance-first;
+
+    width: 100%;
+    height: 1.5em;
+
+    font-size: 1.5rem;
+    color: #fff6d5;
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.main-content {
+    @extend .importance-second;
+
+    width: 100%;
+    height: calc(100% - 1.5em);
+
+    display: flex;
+}
+
+.main-content-menu {
+    width: 12em;
+    height: 100%;
+    border-right: 1px solid black;
+}
+
+.main-content-page {
+    flex: 1;
+    height: 100%;
+
+    position: relative;
+}
+
+.menu {
+    @extend .importance-third;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-node {
+    width: 100%;
+    height: 3em;
+
+    padding: 0.5em;
+    border-bottom: 1px solid black;
+}
+
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fat-box {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.modal-bk {
+    @extend .center-container;
+
+    width: 100%;
+    height: 100%;
+
+    position: absolute;
+    background-color: rgba(0.5, 0.5, 0.5, 0.5);
+}
+
+.box {
+    width: 62%;
+
+    border-radius: 6px;
+
+    background: white;
+}

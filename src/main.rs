@@ -52,9 +52,9 @@ impl yew::Component for Main {
 
         html! {
             <div class={"main"}>
-                <div class={"header"}>{"Huiwen"}</div>
-                <div class={"content"}>
-                    <element::Menu {tree} switch={menu_switch} />
+                <div class={"main-header"}>{"Huiwen"}</div>
+                <div class={"main-content"}>
+                    <element::Menu {tree} switch={menu_switch} classes={"main-content-menu"} />
                     <BrowserRouter><Switch<router::Route> render={router::switch} /></BrowserRouter>
                 </div>
             </div>

@@ -17,10 +17,8 @@ impl yew::Component for CanvasPage {
 
     fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
         yew::html! {
-            <div class={"page"}>
-                <div>
-                    <element::Canvas />
-                </div>
+            <div class={"main-content-page"}>
+                <element::Canvas />
             </div>
         }
     }
