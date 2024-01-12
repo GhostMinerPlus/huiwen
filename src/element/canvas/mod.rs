@@ -13,7 +13,7 @@ use self::raw_canvas::RawCanvas;
 
 pub enum Message {
     Init(EventLoop<()>),
-    Paingting((f32, f32, f32, PhysicalSize<u32>)),
+    StartPainting((f32, f32, f32, PhysicalSize<u32>)),
     Paint((f32, f32, f32, PhysicalSize<u32>)),
     EndLine,
     Nothing,
@@ -76,7 +76,7 @@ impl yew::Component for Canvas {
                 }
             };
 
-            link.send_message(Message::Paingting((x, y, force, sz)));
+            link.send_message(Message::StartPainting((x, y, force, sz)));
         });
 
         let link = ctx.link().clone();
@@ -128,7 +128,7 @@ impl yew::Component for Canvas {
             } else {
                 e.pressure()
             };
-            link.send_message(Message::Paint((x, y, force, sz)));
+            link.send_message(Message::StartPainting((x, y, force, sz)));
         });
 
         let link = ctx.link().clone();
@@ -182,7 +182,7 @@ impl yew::Component for Canvas {
                 true
             }
             Message::Nothing => false,
-            Message::Paingting((x, y, force, sz)) => {
+            Message::StartPainting((x, y, force, sz)) => {
                 self.painting = true;
                 let mut op = self.p_canvas.lock().unwrap();
                 let raw_canvas = op.as_mut().unwrap();
