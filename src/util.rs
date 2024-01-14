@@ -4,21 +4,11 @@ use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{RequestInit, RequestMode, Response};
 
-async fn request(req: &Request, method: &str) -> io::Result<Response> {
-    let mut opts = RequestInit::new();
-    opts.method(method);
-    opts.mode(RequestMode::Cors);
-    opts.body(Some(&req.body));
-    let request = web_sys::Request::new_with_str_and_init(&req.url, &opts).unwrap();
-    for (k, v) in &req.headers {
-        let _ = request.headers().set(&k, &v);
-    }
-    let promise = web_sys::window().unwrap().fetch_with_request(&request);
-    JsFuture::from(promise)
-        .await
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, ""))?
-        .dyn_into()
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, ""))
+// Public
+pub fn map_js_error(e: JsValue) -> io::Error {
+    let js_msg = js_sys::Reflect::get(&e, &JsValue::from_str("message")).unwrap();
+    let msg = js_msg.as_string().unwrap();
+    io::Error::new(io::ErrorKind::Other, msg)
 }
 
 pub struct Request {
@@ -36,29 +26,43 @@ impl Request {
         }
     }
 
+    /// Set header of this request.
     pub fn with_header(&mut self, k: &str, v: &str) -> &mut Self {
         self.headers.insert(k.to_string(), v.to_string());
         self
     }
 
+    /// Set body of this request with a &[JsValue].
     pub fn with_body(&mut self, body: JsValue) -> &mut Self {
         self.body = body;
         self
     }
 
-    pub async fn post(&self) -> io::Result<Response> {
-        request(self, "POST").await
+    /// Set body of this request with a &[str].
+    ///
+    /// This method will parse the body in &[str] into [JsValue], so it may return a [Err] when failing to parse.
+    pub fn with_body_str(&mut self, body: &str) -> io::Result<&mut Self> {
+        self.body = js_sys::JSON::parse(body).map_err(map_js_error)?;
+        Ok(self)
     }
 
-    pub async fn delete(&self) -> io::Result<Response> {
-        request(self, "DELETE").await
-    }
-
-    pub async fn put(&self) -> io::Result<Response> {
-        request(self, "PUT").await
-    }
-
-    pub async fn get(&self) -> io::Result<Response> {
-        request(self, "GET").await
+    pub async fn send(&self, method: &str) -> io::Result<Response> {
+        let mut opts = RequestInit::new();
+        opts.method(method);
+        opts.mode(RequestMode::Cors);
+        opts.body(Some(&self.body));
+        let request =
+            web_sys::Request::new_with_str_and_init(&self.url, &opts).map_err(map_js_error)?;
+        for (k, v) in &self.headers {
+            let _ = request.headers().set(&k, &v);
+        }
+        let promise = web_sys::window()
+            .ok_or(io::Error::new(io::ErrorKind::NotFound, "window not found"))?
+            .fetch_with_request(&request);
+        JsFuture::from(promise)
+            .await
+            .map_err(map_js_error)?
+            .dyn_into()
+            .map_err(map_js_error)
     }
 }
