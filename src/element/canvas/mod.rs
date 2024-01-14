@@ -1,8 +1,8 @@
 mod raw_canvas;
 
 use cgmath::*;
-use painting::AsPainter;
-use yew::classes;
+use painting::{point::Point, AsPainter};
+use yew::{classes, Callback};
 
 use std::{
     io,
@@ -25,12 +25,17 @@ pub enum Message {
 pub struct Props {
     #[prop_or_default]
     pub classes: yew::Classes,
+    #[prop_or_default]
+    pub commit: Callback<Vec<Point>>,
+    #[prop_or_default]
+    pub edge_v: Vec<Vec<Point>>,
 }
 
 pub struct Canvas {
     canvas: yew::NodeRef,
     p_canvas: Arc<Mutex<Option<RawCanvas>>>,
     painting: bool,
+    last_edge: Vec<Point>,
 }
 
 impl yew::Component for Canvas {
@@ -46,6 +51,7 @@ impl yew::Component for Canvas {
             canvas,
             p_canvas,
             painting: false,
+            last_edge: Vec::default(),
         }
     }
 
@@ -171,7 +177,7 @@ impl yew::Component for Canvas {
         }
     }
 
-    fn update(&mut self, _ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Message::Init(event_loop) => {
                 let canvas = self.canvas.clone();
@@ -181,31 +187,54 @@ impl yew::Component for Canvas {
                     let raw_canvas = op.as_mut().unwrap();
                     raw_canvas.on_event(canvas.clone(), event, target, control_flow);
                 });
+
+                let mut op = self.p_canvas.lock().unwrap();
+                let raw_canvas = op.as_mut().unwrap();
+
+                let edge_v = &ctx.props().edge_v;
+                for edge in edge_v {
+                    raw_canvas.start_line(edge[0].clone());
+                    for i in 1..edge_v.len() {
+                        raw_canvas.push_point(edge[i].clone());
+                    }
+                    raw_canvas.end_line();
+                }
+                raw_canvas.window.request_redraw();
+
                 true
             }
             Message::StartPainting((x, y, force, sz)) => {
                 self.painting = true;
                 let mut op = self.p_canvas.lock().unwrap();
                 let raw_canvas = op.as_mut().unwrap();
-                raw_canvas.start_line(raw_canvas.pen.px2point(x, y, force, sz));
+                let pt = raw_canvas.pen.px2point(x, y, force, sz);
+                raw_canvas.start_line(pt.clone());
                 raw_canvas.window.request_redraw();
-                false
-            }
-            Message::EndLine => {
-                self.painting = false;
-                let mut op = self.p_canvas.lock().unwrap();
-                let raw_canvas = op.as_mut().unwrap();
-                raw_canvas.end_line();
-                raw_canvas.window.request_redraw();
+                self.last_edge.push(pt);
                 false
             }
             Message::Paint((x, y, force, sz)) => {
                 if self.painting {
                     let mut op = self.p_canvas.lock().unwrap();
                     let raw_canvas = op.as_mut().unwrap();
-                    raw_canvas.push_point(raw_canvas.pen.px2point(x, y, force, sz));
+                    let pt = raw_canvas.pen.px2point(x, y, force, sz);
+                    raw_canvas.push_point(pt.clone());
                     raw_canvas.window.request_redraw();
+                    self.last_edge.push(pt);
                 }
+                false
+            }
+            Message::EndLine => {
+                self.painting = false;
+                if self.last_edge.is_empty() {
+                    return false;
+                }
+                let mut op = self.p_canvas.lock().unwrap();
+                let raw_canvas = op.as_mut().unwrap();
+                raw_canvas.end_line();
+                raw_canvas.window.request_redraw();
+                ctx.props().commit.emit(self.last_edge.clone());
+                self.last_edge.clear();
                 false
             }
         }

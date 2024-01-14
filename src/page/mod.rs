@@ -5,21 +5,25 @@ use std::io;
 use yew::{html, Callback, Context, Html};
 use yew_router::{BrowserRouter, Switch};
 
-use crate::{element, router, util};
+use crate::{element, router, service, util};
 
 // Public
 pub use home::*;
+
+pub enum Message {
+    Init(String),
+}
 
 pub struct Main {
     base_url: String,
 }
 
 impl yew::Component for Main {
-    type Message = ();
+    type Message = Message;
 
     type Properties = ();
 
-    fn create(_: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         match || -> io::Result<Self> {
             let base_url = web_sys::window()
                 .ok_or(io::Error::new(io::ErrorKind::NotFound, "window not found"))?
@@ -36,7 +40,15 @@ impl yew::Component for Main {
                 ))?;
             Ok(Self { base_url })
         }() {
-            Ok(r) => r,
+            Ok(r) => {
+                ctx.link().send_future(async {
+                    match service::get_version().await {
+                        Ok(version) => Self::Message::Init(version),
+                        Err(e) => panic!("When fetching version: {e}"),
+                    }
+                });
+                r
+            }
             Err(e) => panic!("When accessing base_url: {e}"),
         }
     }
@@ -80,6 +92,15 @@ impl yew::Component for Main {
                     <BrowserRouter><Switch<router::Route> render={router::switch} /></BrowserRouter>
                 </div>
             </div>
+        }
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Message::Init(version) => {
+                log::info!("version: {version}");
+                false
+            }
         }
     }
 }
