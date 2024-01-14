@@ -17,23 +17,23 @@ pub struct RawCanvas {
 }
 
 impl RawCanvas {
-    pub async fn create(
-        n_canvas: yew::NodeRef,
-        event_loop: &EventLoop<()>,
-    ) -> io::Result<Self> {
+    pub async fn create(n_canvas: yew::NodeRef, event_loop: &EventLoop<()>) -> io::Result<Self> {
         let sz = PhysicalSize::new(2048, 2048);
         let window = {
             let window = WindowBuilder::new()
                 .with_canvas(n_canvas.cast())
                 .build(&event_loop)
-                .unwrap();
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
             window.set_inner_size(sz);
             window
         };
         n_canvas
             .cast::<HtmlCanvasElement>()
             .as_ref()
-            .unwrap()
+            .ok_or(io::Error::new(
+                io::ErrorKind::NotFound,
+                "'HtmlCanvasElement' not found",
+            ))?
             .style()
             .set_css_text("");
 
@@ -43,7 +43,8 @@ impl RawCanvas {
         });
         log::info!("instance: {:?}", instance);
 
-        let surface = unsafe { instance.create_surface(&window) }.unwrap();
+        let surface = unsafe { instance.create_surface(&window) }
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         log::info!("surface: {:?}", surface);
 
         let canvas = painting::Canvas::create(&instance, surface, window.inner_size()).await?;

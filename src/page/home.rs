@@ -1,31 +1,21 @@
 use crate::*;
 
-pub enum Msg {
-    Nothing,
-}
+pub struct HomePage {}
 
-pub struct CanvasPage {}
-
-impl yew::Component for CanvasPage {
-    type Message = Msg;
+impl yew::Component for HomePage {
+    type Message = ();
 
     type Properties = ();
 
-    fn create(ctx: &yew::Context<Self>) -> Self {
+    fn create(_: &yew::Context<Self>) -> Self {
         Self {}
     }
 
-    fn view(&self, _ctx: &yew::Context<Self>) -> yew::Html {
+    fn view(&self, _: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <div class={"main-content-page"}>
                 <element::Canvas />
             </div>
-        }
-    }
-
-    fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::Nothing => false,
         }
     }
 }

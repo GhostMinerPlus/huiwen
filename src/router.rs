@@ -14,7 +14,7 @@ pub enum Route {
 
 pub fn switch(route: Route) -> Html {
     match route {
-        Route::Home => html! { <page::CanvasPage /> },
+        Route::Home => html! { <page::HomePage /> },
         Route::NotFound => html! {
             <div>{"404"}</div>
         },
