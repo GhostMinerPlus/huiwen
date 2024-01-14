@@ -46,6 +46,11 @@ impl Request {
         Ok(self)
     }
 
+    pub fn with_body_txt(&mut self, body: &str) -> io::Result<&mut Self> {
+        self.body = JsValue::from_str(body);
+        Ok(self)
+    }
+
     pub async fn send(&self, method: &str) -> io::Result<Response> {
         let mut opts = RequestInit::new();
         opts.method(method);
