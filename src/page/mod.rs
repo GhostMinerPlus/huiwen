@@ -1,9 +1,11 @@
 mod home;
 
+use std::io;
+
 use yew::{html, Callback, Context, Html};
 use yew_router::{BrowserRouter, Switch};
 
-use crate::{element, router};
+use crate::{element, router, util};
 
 // Public
 pub use home::*;
@@ -17,37 +19,58 @@ impl yew::Component for Main {
 
     type Properties = ();
 
-    fn create(_ctx: &Context<Self>) -> Self {
-        let base_url = web_sys::window()
-            .unwrap()
-            .document()
-            .unwrap()
-            .base_uri()
-            .unwrap()
-            .unwrap();
-
-        Self { base_url }
+    fn create(_: &Context<Self>) -> Self {
+        match || -> io::Result<Self> {
+            let base_url = web_sys::window()
+                .ok_or(io::Error::new(io::ErrorKind::NotFound, "window not found"))?
+                .document()
+                .ok_or(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "document not found",
+                ))?
+                .base_uri()
+                .map_err(util::map_js_error)?
+                .ok_or(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "base_uri not found",
+                ))?;
+            Ok(Self { base_url })
+        }() {
+            Ok(r) => r,
+            Err(e) => panic!("When accessing base_url: {e}"),
+        }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, _: &Context<Self>) -> Html {
         let mut tree = ("/".to_string(), Vec::new());
         tree.1.push(element::Node::File("painting".to_string()));
 
         let base_url = self.base_url.clone();
-        let menu_switch = {
-            Callback::from(move |key: String| {
+        let menu_switch = Callback::from(move |key: String| {
+            match || -> io::Result<()> {
                 let location = web_sys::window()
-                    .unwrap()
+                    .ok_or(io::Error::new(io::ErrorKind::NotFound, "window not found"))?
                     .document()
-                    .unwrap()
+                    .ok_or(io::Error::new(
+                        io::ErrorKind::NotFound,
+                        "document not found",
+                    ))?
                     .location()
-                    .unwrap();
-                let _ = match key.as_str() {
+                    .ok_or(io::Error::new(
+                        io::ErrorKind::NotFound,
+                        "location not found",
+                    ))?;
+                match key.as_str() {
                     "painting" => location.replace(&format!("{base_url}")),
                     _ => location.replace(&format!("{base_url}404")),
-                };
-            })
-        };
+                }
+                .map_err(util::map_js_error)?;
+                Ok(())
+            }() {
+                Ok(_) => (),
+                Err(e) => panic!("When accessing location: {e}"),
+            }
+        });
 
         html! {
             <div class={"main"}>
