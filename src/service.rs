@@ -1,5 +1,6 @@
 use std::io;
 
+use cgmath::Point3;
 use painting::point::Point;
 use wasm_bindgen_futures::JsFuture;
 
@@ -37,6 +38,23 @@ pub async fn get_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
     log::info!("get edge_v: {canvas}");
 
     let mut edge_v = Vec::new();
+    let mut edge = Vec::new();
+    edge.push(Point {
+        pos: Point3::new(0.0, 0.0, 0.0),
+        color: [0.2, 0.6, 0.0, 1.0],
+        width: 0.07,
+    });
+    edge.push(Point {
+        pos: Point3::new(0.0, 0.5, 0.0),
+        color: [0.7, 0.0, 0.5, 1.0],
+        width: 0.03,
+    });
+    edge.push(Point {
+        pos: Point3::new(0.5, 0.2, 0.0),
+        color: [0.0, 0.4, 0.8, 1.0],
+        width: 0.1,
+    });
+    edge_v.push(edge);
     // TODO:
     Ok(edge_v)
 }

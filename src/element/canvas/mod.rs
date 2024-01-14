@@ -15,7 +15,8 @@ use winit::{dpi::PhysicalSize, event_loop::EventLoop, platform::web::EventLoopEx
 use self::raw_canvas::RawCanvas;
 
 pub enum Message {
-    Init(EventLoop<()>),
+    Refresh,
+    Create(EventLoop<()>),
     StartPainting((f32, f32, f32, PhysicalSize<u32>)),
     Paint((f32, f32, f32, PhysicalSize<u32>)),
     EndLine,
@@ -43,7 +44,7 @@ impl yew::Component for Canvas {
 
     type Properties = Props;
 
-    fn create(_ctx: &yew::Context<Self>) -> Self {
+    fn create(_: &yew::Context<Self>) -> Self {
         let canvas = yew::NodeRef::default();
         let p_canvas = Arc::new(Mutex::new(None));
 
@@ -179,7 +180,7 @@ impl yew::Component for Canvas {
 
     fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Message::Init(event_loop) => {
+            Message::Create(event_loop) => {
                 let canvas = self.canvas.clone();
                 let p_canvas = self.p_canvas.clone();
                 event_loop.spawn(move |event, target, control_flow| {
@@ -187,21 +188,26 @@ impl yew::Component for Canvas {
                     let raw_canvas = op.as_mut().unwrap();
                     raw_canvas.on_event(canvas.clone(), event, target, control_flow);
                 });
-
+                ctx.link().send_message(Message::Refresh);
+                true
+            }
+            Message::Refresh => {
                 let mut op = self.p_canvas.lock().unwrap();
+                if op.is_none() {
+                    return false;
+                }
                 let raw_canvas = op.as_mut().unwrap();
 
                 let edge_v = &ctx.props().edge_v;
                 for edge in edge_v {
                     raw_canvas.start_line(edge[0].clone());
-                    for i in 1..edge_v.len() {
+                    for i in 1..edge.len() {
                         raw_canvas.push_point(edge[i].clone());
                     }
                     raw_canvas.end_line();
                 }
                 raw_canvas.window.request_redraw();
-
-                true
+                false
             }
             Message::StartPainting((x, y, force, sz)) => {
                 self.painting = true;
@@ -240,6 +246,15 @@ impl yew::Component for Canvas {
         }
     }
 
+    fn changed(
+        &mut self,
+        ctx: &yew::prelude::Context<Self>,
+        _old_props: &Self::Properties,
+    ) -> bool {
+        ctx.link().send_message(Message::Refresh);
+        false
+    }
+
     fn rendered(&mut self, ctx: &yew::Context<Self>, first_render: bool) {
         if !first_render {
             return;
@@ -258,7 +273,7 @@ impl yew::Component for Canvas {
                 let raw_canvas = RawCanvas::create(canvas.clone(), &event_loop).await?;
                 let mut p_canvas = p_canvas.lock().unwrap();
                 *p_canvas = Some(raw_canvas);
-                Ok(Message::Init(event_loop))
+                Ok(Message::Create(event_loop))
             }
             .await;
             match rs {
