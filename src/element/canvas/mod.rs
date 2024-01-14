@@ -4,7 +4,10 @@ use cgmath::*;
 use painting::AsPainter;
 use yew::classes;
 
-use std::sync::{Arc, Mutex};
+use std::{
+    io,
+    sync::{Arc, Mutex},
+};
 
 use web_sys::{HtmlCanvasElement, MouseEvent, PointerEvent};
 use winit::{dpi::PhysicalSize, event_loop::EventLoop, platform::web::EventLoopExtWebSys};
@@ -16,7 +19,6 @@ pub enum Message {
     StartPainting((f32, f32, f32, PhysicalSize<u32>)),
     Paint((f32, f32, f32, PhysicalSize<u32>)),
     EndLine,
-    Nothing,
 }
 
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
@@ -181,7 +183,6 @@ impl yew::Component for Canvas {
                 });
                 true
             }
-            Message::Nothing => false,
             Message::StartPainting((x, y, force, sz)) => {
                 self.painting = true;
                 let mut op = self.p_canvas.lock().unwrap();
@@ -223,17 +224,18 @@ impl yew::Component for Canvas {
         let canvas = self.canvas.clone();
         let p_canvas = self.p_canvas.clone();
         ctx.link().send_future(async move {
-            let event_loop = EventLoop::new();
-            let raw_canvas = match RawCanvas::create(canvas.clone(), &event_loop).await {
-                Ok(o) => o,
-                Err(e) => {
-                    log::error!("failed to build raw_canvas: {:?}", e);
-                    return Message::Nothing;
-                }
-            };
-            let mut p_canvas = p_canvas.lock().unwrap();
-            *p_canvas = Some(raw_canvas);
-            Message::Init(event_loop)
+            let rs: io::Result<Message> = async {
+                let event_loop = EventLoop::new();
+                let raw_canvas = RawCanvas::create(canvas.clone(), &event_loop).await?;
+                let mut p_canvas = p_canvas.lock().unwrap();
+                *p_canvas = Some(raw_canvas);
+                Ok(Message::Init(event_loop))
+            }
+            .await;
+            match rs {
+                Ok(msg) => msg,
+                Err(e) => panic!("Failed to build raw_canvas: {:?}", e),
+            }
         });
     }
 }
