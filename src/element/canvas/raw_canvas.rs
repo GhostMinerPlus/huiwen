@@ -52,7 +52,7 @@ impl RawCanvas {
         Ok(Self {
             canvas,
             window,
-            pen: painting::point::Pen::new(),
+            pen: painting::point::Pen::default(),
         })
     }
 
