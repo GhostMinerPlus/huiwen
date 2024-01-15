@@ -1,7 +1,7 @@
 mod raw_canvas;
 
 use cgmath::*;
-use painting::{point::Point, AsPainter};
+use painting::point::Point;
 use yew::{classes, Callback};
 
 use std::{
@@ -197,6 +197,7 @@ impl yew::Component for Canvas {
                     return false;
                 }
                 let raw_canvas = op.as_mut().unwrap();
+                raw_canvas.clear();
 
                 let edge_v = &ctx.props().edge_v;
                 for edge in edge_v {

@@ -97,11 +97,16 @@ _ jump 2
     Ok(())
 }
 
-pub async fn get_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
+pub async fn pull_edge_v(canvas: &str, last_edge_h: &str) -> io::Result<(String, Vec<Vec<Point>>)> {
+    let first = if last_edge_h.is_empty() {
+        format!("{canvas}->edge_v->first")
+    } else {
+        format!("{last_edge_h}->next")
+    };
     let script = format!(
         r#""->return->class" set return
 "->return->json" set 1
-"->edge_v->class" set {canvas}->edge_v
+"->edge_v->class" set {first}
 "->edge_v->dimension" set 2
 "->edge_v->attr" set pos
 "->edge_v->attr" append color
@@ -109,7 +114,9 @@ pub async fn get_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
 "" ->return ->edge_v"#
     );
     let s = execute(&script).await?;
-    let edge_v_json = json::parse(&s).unwrap();
+    let rs: json::JsonValue = json::parse(&s).unwrap();
+    let last = rs["last"].as_str().unwrap().to_string();
+    let edge_v_json = &rs["json"];
 
     let mut edge_v = Vec::new();
     for edge_json in edge_v_json.members() {
@@ -127,5 +134,5 @@ pub async fn get_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
         edge_v.push(edge);
     }
 
-    Ok(edge_v)
+    Ok((last, edge_v))
 }

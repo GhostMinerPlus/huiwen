@@ -1,6 +1,5 @@
 use std::io;
 
-use painting::AsPainter;
 use web_sys::HtmlCanvasElement;
 use winit::{
     dpi::PhysicalSize,
@@ -92,35 +91,37 @@ impl RawCanvas {
                 );
                 self.canvas
                     .set_aspect((sz.width as f32) / (sz.height as f32));
-                self.redraw();
+                self.render();
             }
             _ => {}
         }
     }
-}
 
-impl painting::AsPainter for RawCanvas {
-    fn redraw(&mut self) {
-        self.canvas.redraw();
+    pub fn render(&mut self) {
+        self.canvas.render();
     }
 
-    fn push_point(&mut self, pt: painting::point::Point) {
+    pub fn push_point(&mut self, pt: painting::point::Point) {
         self.canvas.push_point(pt);
     }
 
-    fn start_line(&mut self, pt: painting::point::Point) {
+    pub fn start_line(&mut self, pt: painting::point::Point) {
         self.canvas.start_line(pt);
     }
 
-    fn end_line(&mut self) {
+    pub fn end_line(&mut self) {
         self.canvas.end_line();
     }
 
-    fn cancle_line(&mut self) {
+    pub fn cancle_line(&mut self) {
         self.canvas.cancle_line();
     }
 
-    fn set_aspect(&mut self, aspect: f32) {
+    pub fn set_aspect(&mut self, aspect: f32) {
         self.canvas.set_aspect(aspect);
+    }
+
+    pub fn clear(&mut self) {
+        self.canvas.clear();
     }
 }
