@@ -30,6 +30,7 @@ serde = "1.0.159"
 async-std = "1.12.0"
 
 painting = { git = "https://github.com/GhostMinerPlus/painting.git", features = ["webgl"] }
+json = "0.12.4"
 
 [dependencies.web-sys]
 version = "0.3.61"

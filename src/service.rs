@@ -98,27 +98,34 @@ _ jump 2
 }
 
 pub async fn get_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
+    let script = format!(
+        r#""->return->class" set return
+"->return->json" set 1
+"->edge_v->class" set {canvas}->edge_v
+"->edge_v->dimension" set 2
+"->edge_v->attr" set pos
+"->edge_v->attr" append color
+"->edge_v->attr" append width
+"" ->return ->edge_v"#
+    );
+    let s = execute(&script).await?;
+    let edge_v_json = json::parse(&s).unwrap();
+
     let mut edge_v = Vec::new();
-    let mut edge_h = execute(&format!("_ return {canvas}->edge_v->first")).await?;
-    while !edge_h.is_empty() {
-        let mut point_h = execute(&format!("_ return {edge_h}->first")).await?;
+    for edge_json in edge_v_json.members() {
         let mut edge = Vec::new();
-        while !point_h.is_empty() {
-            let pos = execute(&format!("_ return {point_h}->pos")).await?;
-            let color = execute(&format!("_ return {point_h}->color")).await?;
-            let width = execute(&format!("_ return {point_h}->width"))
-                .await?
-                .parse()
-                .unwrap();
+        for point_json in edge_json.members() {
+            let pos = point_json["pos"].as_str().unwrap().to_string();
+            let color = point_json["color"].as_str().unwrap().to_string();
+            let width = point_json["width"].as_str().unwrap().parse().unwrap();
             edge.push(Point {
                 pos: str_to_p3(&pos),
                 color: str_to_c4(&color),
                 width,
             });
-            point_h = execute(&format!("_ return {point_h}->next")).await?;
         }
         edge_v.push(edge);
-        edge_h = execute(&format!("_ return {edge_h}->next")).await?;
     }
+
     Ok(edge_v)
 }
