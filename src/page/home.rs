@@ -6,9 +6,9 @@ use yew::Callback;
 use crate::*;
 
 pub enum Message {
-    Init((String, String, Vec<Vec<Point>>)),
+    Init((String, Vec<Vec<Point>>)),
     Commit(Vec<Point>),
-    Pull((String, Vec<Vec<Point>>)),
+    Pull(Vec<Vec<Point>>),
     Post(bool),
     PostPull,
     Clear,
@@ -17,7 +17,6 @@ pub enum Message {
 #[derive(Default)]
 pub struct HomePage {
     canvas: String,
-    last_edge_h: String,
     edge_v: Vec<Vec<Point>>,
 }
 
@@ -28,10 +27,10 @@ impl yew::Component for HomePage {
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future(async {
-            let rs: io::Result<(String, String, Vec<Vec<Point>>)> = async {
+            let rs: io::Result<(String, Vec<Vec<Point>>)> = async {
                 let canvas = service::get_canvas().await?;
-                let (last_edge_h, edge_v) = service::pull_edge_v(&canvas, "").await?;
-                Ok((canvas, last_edge_h, edge_v))
+                let edge_v = service::pull_edge_v(&canvas).await?;
+                Ok((canvas, edge_v))
             }
             .await;
             match rs {
@@ -71,9 +70,8 @@ impl yew::Component for HomePage {
 
     fn update(&mut self, ctx: &yew::prelude::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Message::Init((canvas, last_edge_h, edge_v)) => {
+            Message::Init((canvas, edge_v)) => {
                 self.canvas = canvas;
-                self.last_edge_h = last_edge_h;
                 self.edge_v = edge_v;
                 true
             }
@@ -88,12 +86,10 @@ impl yew::Component for HomePage {
             Message::Post(b) => b,
             Message::PostPull => {
                 let canvas = self.canvas.clone();
-                let last_edge_h = self.last_edge_h.clone();
                 ctx.link().send_future(async move {
-                    let rs: io::Result<(String, Vec<Vec<Point>>)> = async {
-                        let (last_edge_h, edge_v) =
-                            service::pull_edge_v(&canvas, &last_edge_h).await?;
-                        Ok((last_edge_h, edge_v))
+                    let rs: io::Result<Vec<Vec<Point>>> = async {
+                        let edge_v = service::pull_edge_v(&canvas).await?;
+                        Ok(edge_v)
                     }
                     .await;
                     match rs {
@@ -103,13 +99,11 @@ impl yew::Component for HomePage {
                 });
                 false
             }
-            Message::Pull((last_edge_h, mut edge_v)) => {
-                self.last_edge_h = last_edge_h;
-                self.edge_v.append(&mut edge_v);
+            Message::Pull(edge_v) => {
+                self.edge_v = edge_v;
                 true
             }
             Message::Clear => {
-                self.last_edge_h = String::new();
                 self.edge_v.clear();
                 true
             }

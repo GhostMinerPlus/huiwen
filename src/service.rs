@@ -51,43 +51,16 @@ pub async fn get_canvas() -> io::Result<String> {
 }
 
 pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
-    let mut script = format!(
-        "\"->edge\" set ?
-\"->o_last\" set {canvas}->edge_v->last
-\"{canvas}->edge_v->last\" set ->edge
-\"->temp\" set ->o_last
-\"->temp\" cmp_str \"\"
-_ jump ->temp
-_ jump 2
-_ jump 3
-\"{canvas}->edge_v->first\" set ->edge
-_ jump 2
-\"->o_last->next\" set ->edge"
-    );
+    let mut script = format!(r#"{canvas} new edge"#);
 
-    let pt = &edge[0];
-    script = format!(
-        "{script}
-\"->point\" set ?
-\"->point->pos\" set {}
-\"->point->color\" set {}
-\"->point->width\" set {}
-\"->edge->first\" set ->point
-\"->edge->last\" set ->point",
-        p3_to_str(&pt.pos),
-        c4_to_str(&pt.color),
-        pt.width
-    );
-    for pt in &edge[1..] {
+    for pt in &edge {
         script = format!(
-            "{script}
-\"->point\" set ?
-\"->point->pos\" set {}
-\"->point->color\" set {}
-\"->point->width\" set {}
-\"->last_pt\" set ->edge->last
-\"->last_pt->next\" set ->point
-\"->edge->last\" set ->point",
+            r#"{script}
+{canvas}->edge new point
+"->point" set {canvas}->edge->point
+"->point->pos" set {}
+"->point->color" set {}
+"->point->width" set {}"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -97,31 +70,21 @@ _ jump 2
     Ok(())
 }
 
-pub async fn pull_edge_v(canvas: &str, last_edge_h: &str) -> io::Result<(String, Vec<Vec<Point>>)> {
-    let first = if last_edge_h.is_empty() {
-        format!("{canvas}->edge_v->first")
-    } else {
-        format!("{last_edge_h}->next")
-    };
+pub async fn pull_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
     let script = format!(
-        r#""->return->class" set return
-"->return->json" set 1
-"->edge_v->class" set {first}
-"->edge_v->dimension" set 2
-"->edge_v->attr" set pos
-"->edge_v->attr" append color
-"->edge_v->attr" append width
-"" ->return ->edge_v"#
+        r#""->result->source" set {canvas}
+"->result->dimension" set edge
+->result new dimension
+"->result->dimension" set point
+"" dump ->result"#
     );
     let s = execute(&script).await?;
     let rs: json::JsonValue = json::parse(&s).unwrap();
-    let last = rs["last"].as_str().unwrap().to_string();
-    let edge_v_json = &rs["json"];
 
     let mut edge_v = Vec::new();
-    for edge_json in edge_v_json.members() {
+    for edge_json in rs["edge"].members() {
         let mut edge = Vec::new();
-        for point_json in edge_json.members() {
+        for point_json in edge_json["point"].members() {
             let pos = point_json["pos"].as_str().unwrap().to_string();
             let color = point_json["color"].as_str().unwrap().to_string();
             let width = point_json["width"].as_str().unwrap().parse().unwrap();
@@ -134,5 +97,5 @@ pub async fn pull_edge_v(canvas: &str, last_edge_h: &str) -> io::Result<(String,
         edge_v.push(edge);
     }
 
-    Ok((last, edge_v))
+    Ok(edge_v)
 }
