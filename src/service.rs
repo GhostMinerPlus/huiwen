@@ -51,16 +51,16 @@ pub async fn get_canvas() -> io::Result<String> {
 }
 
 pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
-    let mut script = format!(r#"{canvas} new edge"#);
+    let mut script = format!(r#""{canvas}->edge" append ?"#);
 
     for pt in &edge {
         script = format!(
             r#"{script}
-{canvas}->edge new point
-"->point" set {canvas}->edge->point
+"->point" set ?
 "->point->pos" set {}
 "->point->color" set {}
-"->point->width" set {}"#,
+"->point->width" set {}
+"{canvas}->edge->point" append ->point"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -72,29 +72,33 @@ pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
 
 pub async fn pull_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
     let script = format!(
-        r#""->result->source" set {canvas}
+        r#""->result->root" set {canvas}
 "->result->dimension" set edge
-->result new dimension
-"->result->dimension" set point
+"->result->dimension" append point
+"->result->attr" set pos
+"->result->attr" append color
+"->result->attr" append width
 "" dump ->result"#
     );
     let s = execute(&script).await?;
     let rs: json::JsonValue = json::parse(&s).unwrap();
 
     let mut edge_v = Vec::new();
-    for edge_json in rs["edge"].members() {
-        let mut edge = Vec::new();
-        for point_json in edge_json["point"].members() {
-            let pos = point_json["pos"].as_str().unwrap().to_string();
-            let color = point_json["color"].as_str().unwrap().to_string();
-            let width = point_json["width"].as_str().unwrap().parse().unwrap();
-            edge.push(Point {
-                pos: str_to_p3(&pos),
-                color: str_to_c4(&color),
-                width,
-            });
+    let mut edge_h = String::new();
+    for edge_point_json in rs.members() {
+        if edge_h != edge_point_json["edge"].as_str().unwrap() {
+            edge_v.push(Vec::new());
+            edge_h = edge_point_json["edge"].as_str().unwrap().to_string();
         }
-        edge_v.push(edge);
+        let pos = edge_point_json["pos"].as_str().unwrap().to_string();
+        let color = edge_point_json["color"].as_str().unwrap().to_string();
+        let width = edge_point_json["width"].as_str().unwrap().parse().unwrap();
+        let pt = Point {
+            pos: str_to_p3(&pos),
+            color: str_to_c4(&color),
+            width,
+        };
+        edge_v.last_mut().unwrap().push(pt);
     }
 
     Ok(edge_v)
