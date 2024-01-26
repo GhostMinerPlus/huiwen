@@ -46,12 +46,8 @@ pub async fn get_version() -> io::Result<String> {
     execute("_ return huiwen->version").await
 }
 
-pub async fn get_canvas() -> io::Result<String> {
-    execute("_ return huiwen->canvas").await
-}
-
-pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
-    let mut script = format!(r#""{canvas}->edge" append ?"#);
+pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
+    let mut script = format!(r#""huiwen->canvas->edge" append ?"#);
 
     for pt in &edge {
         script = format!(
@@ -60,7 +56,7 @@ pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
 "->$point->pos" asign {}
 "->$point->color" asign {}
 "->$point->width" asign {}
-"{canvas}->edge->point" append ->$point"#,
+"huiwen->canvas->edge->point" append ->$point"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -70,9 +66,9 @@ pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
     Ok(())
 }
 
-pub async fn pull_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
+pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
     let script = format!(
-        r#""->$result->root" asign {canvas}
+        r#""->$result->root" asign huiwen->canvas
 "->$result->dimension" asign edge
 "->$result->dimension" append point
 "->$result->attr" asign pos
@@ -102,4 +98,12 @@ pub async fn pull_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
     }
 
     Ok(edge_v)
+}
+
+pub async fn clear() -> io::Result<()> {
+    let script = format!(
+        r#""huiwen->canvas" set ?"#
+    );
+    execute(&script).await?;
+    Ok(())
 }
