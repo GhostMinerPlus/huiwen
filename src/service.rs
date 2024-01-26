@@ -56,11 +56,11 @@ pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
     for pt in &edge {
         script = format!(
             r#"{script}
-"->point" set ?
-"->point->pos" asign {}
-"->point->color" asign {}
-"->point->width" asign {}
-"{canvas}->edge->point" append ->point"#,
+"->$point" set ?
+"->$point->pos" asign {}
+"->$point->color" asign {}
+"->$point->width" asign {}
+"{canvas}->edge->point" append ->$point"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -72,13 +72,13 @@ pub async fn commit_edge(canvas: &str, edge: Vec<Point>) -> io::Result<()> {
 
 pub async fn pull_edge_v(canvas: &str) -> io::Result<Vec<Vec<Point>>> {
     let script = format!(
-        r#""->result->root" asign {canvas}
-"->result->dimension" asign edge
-"->result->dimension" append point
-"->result->attr" asign pos
-"->result->attr" append color
-"->result->attr" append width
-"" dump ->result"#
+        r#""->$result->root" asign {canvas}
+"->$result->dimension" asign edge
+"->$result->dimension" append point
+"->$result->attr" asign pos
+"->$result->attr" append color
+"->$result->attr" append width
+"" dump ->$result"#
     );
     let s = execute(&script).await?;
     let rs: json::JsonValue = json::parse(&s).unwrap();
