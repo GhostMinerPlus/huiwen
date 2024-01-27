@@ -68,12 +68,12 @@ pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
 
 pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
     let script = format!(
-        r#""->$result->root" asign huiwen->canvas
-"->$result->dimension" asign edge
-"->$result->dimension" append point
-"->$result->attr" asign pos
-"->$result->attr" append color
-"->$result->attr" append width
+        r#""->$result->$root" asign huiwen->canvas
+"->$result->$dimension" asign edge
+"->$result->$dimension" append point
+"->$result->$attr" asign pos
+"->$result->$attr" append color
+"->$result->$attr" append width
 "" dump ->$result"#
     );
     let s = execute(&script).await?;
@@ -104,17 +104,17 @@ pub async fn clear() -> io::Result<()> {
     let script = format!(
         r#"_ delete huiwen->canvas
 "huiwen->canvas" append ?
-"->$junk->code" asign point
-"->$junk->source_code" asign edge
+"->$junk->$code" asign point
+"->$junk->$source_code" asign edge
 _ dc_ns ->$junk
-"->$junk->code" set pos
-"->$junk->source_code" set point
+"->$junk->$code" set pos
+"->$junk->$source_code" set point
 _ dc_ns ->$junk
-"->$junk->code" set color
-"->$junk->source_code" set point
+"->$junk->$code" set color
+"->$junk->$source_code" set point
 _ dc_ns ->$junk
-"->$junk->code" set width
-"->$junk->source_code" set point
+"->$junk->$code" set width
+"->$junk->$source_code" set point
 _ dc_ns ->$junk"#
     );
     execute(&script).await?;
