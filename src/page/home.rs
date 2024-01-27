@@ -6,7 +6,7 @@ use yew::Callback;
 use crate::*;
 
 pub enum Message {
-    Init((String, Vec<Vec<Point>>)),
+    Init(Vec<Vec<Point>>),
     Commit(Vec<Point>),
     Pull(Vec<Vec<Point>>),
     Post(bool),
@@ -16,7 +16,6 @@ pub enum Message {
 
 #[derive(Default)]
 pub struct HomePage {
-    canvas: String,
     edge_v: Vec<Vec<Point>>,
 }
 
@@ -27,10 +26,9 @@ impl yew::Component for HomePage {
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future(async {
-            let rs: io::Result<(String, Vec<Vec<Point>>)> = async {
-                let canvas = service::get_canvas().await?;
-                let edge_v = service::pull_edge_v(&canvas).await?;
-                Ok((canvas, edge_v))
+            let rs: io::Result<Vec<Vec<Point>>> = async {
+                let edge_v = service::pull_edge_v().await?;
+                Ok(edge_v)
             }
             .await;
             match rs {
@@ -70,25 +68,22 @@ impl yew::Component for HomePage {
 
     fn update(&mut self, ctx: &yew::prelude::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Message::Init((canvas, edge_v)) => {
-                self.canvas = canvas;
+            Message::Init(edge_v) => {
                 self.edge_v = edge_v;
                 true
             }
             Message::Commit(edge) => {
-                let canvas = self.canvas.clone();
                 ctx.link().send_future(async move {
-                    let _ = service::commit_edge(&canvas, edge).await;
+                    let _ = service::commit_edge(edge).await;
                     Message::Post(false)
                 });
                 false
             }
             Message::Post(b) => b,
             Message::PostPull => {
-                let canvas = self.canvas.clone();
                 ctx.link().send_future(async move {
                     let rs: io::Result<Vec<Vec<Point>>> = async {
-                        let edge_v = service::pull_edge_v(&canvas).await?;
+                        let edge_v = service::pull_edge_v().await?;
                         Ok(edge_v)
                     }
                     .await;
@@ -105,6 +100,13 @@ impl yew::Component for HomePage {
             }
             Message::Clear => {
                 self.edge_v.clear();
+                ctx.link().send_future(async move {
+                    let rs: io::Result<()> = async { service::clear().await }.await;
+                    match rs {
+                        Ok(_) => Self::Message::Post(false),
+                        Err(e) => panic!("When clear canvas: {e}"),
+                    }
+                });
                 true
             }
         }
