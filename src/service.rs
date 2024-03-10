@@ -28,7 +28,7 @@ fn str_to_c4(s: &str) -> [f32; 4] {
     [c4[0], c4[1], c4[2], c4[3]]
 }
 
-async fn execute(script: &str) -> io::Result<json::Array> {
+async fn execute(script: &str) -> io::Result<Vec<String>> {
     let res = Request::new("/service/edge/execute")
         .with_body_txt(script)?
         .send("POST")
@@ -38,16 +38,13 @@ async fn execute(script: &str) -> io::Result<json::Array> {
         .map_err(util::map_js_error)?
         .as_string()
         .ok_or(io::Error::new(io::ErrorKind::NotFound, "returned empty"))?;
-    match json::parse(&rs).unwrap() {
-        json::JsonValue::Array(arr) => Ok(arr),
-        _ => todo!(),
-    }
+    Ok(serde_json::from_str(&rs).unwrap())
 }
 
 // Public
 pub async fn get_version() -> io::Result<String> {
     let rs = execute("$ return huiwen->version").await?;
-    Ok(rs[0].as_str().unwrap().to_string())
+    Ok(rs[0].clone())
 }
 
 pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
@@ -62,7 +59,7 @@ $ $point ?
 $->$point pos {}
 $->$point color {}
 $->$point width {}
-$->$edge point ->$point"#,
+$->$edge point $->$point"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -70,51 +67,45 @@ $->$edge point ->$point"#,
     }
     execute(&format!(
         r#"{script}
-huiwen->canvas edge ->$edge"#
+huiwen->canvas edge $->$edge"#
     ))
     .await?;
     Ok(())
 }
 
 pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
-    let script = format!(
-        r#"$ $path "huiwen->canvas->point"
+    let mut edge_v = Vec::new();
+    let rs = execute("$ return huiwen->canvas->edge").await?;
+    for edge in &rs {
+        let script = format!(
+            r#"$ $path "{edge}->point"
 $ $item pos
 $ $item color
 $ $item width
 $ dump $
 $ return $->$result"#
-    );
-    let rs = execute(&script).await?;
-    let s = rs[0].as_str().unwrap();
-    let rs: json::JsonValue = json::parse(&s).unwrap();
-
-    let mut edge_v = Vec::new();
-    let mut edge_h = String::new();
-    for edge_point_json in rs.members() {
-        if edge_h != edge_point_json["edge"].as_str().unwrap() {
-            edge_v.push(Vec::new());
-            edge_h = edge_point_json["edge"].as_str().unwrap().to_string();
+        );
+        let mut edge = Vec::new();
+        let s = &execute(&script).await?[0];
+        let point_v = json::parse(s).unwrap();
+        for point in point_v.members() {
+            let pos = point["pos"].as_str().unwrap().to_string();
+            let color = point["color"].as_str().unwrap().to_string();
+            let width = point["width"].as_str().unwrap().parse().unwrap();
+            edge.push(Point {
+                pos: str_to_p3(&pos),
+                color: str_to_c4(&color),
+                width,
+            });
         }
-        let pos = edge_point_json["pos"].as_str().unwrap().to_string();
-        let color = edge_point_json["color"].as_str().unwrap().to_string();
-        let width = edge_point_json["width"].as_str().unwrap().parse().unwrap();
-        let pt = Point {
-            pos: str_to_p3(&pos),
-            color: str_to_c4(&color),
-            width,
-        };
-        edge_v.last_mut().unwrap().push(pt);
+        edge_v.push(edge);
     }
-
     Ok(edge_v)
 }
 
 pub async fn clear() -> io::Result<()> {
     let script = format!(
-        r#"huiwen clear canvas
-
-huiwen canvas ?
+        r#"huiwen->canvas clear edge
 $ $junk ?
 
 $->$junk $code point
