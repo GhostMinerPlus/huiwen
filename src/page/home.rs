@@ -3,7 +3,7 @@ use std::io;
 use painting::point::Point;
 use yew::Callback;
 
-use crate::*;
+use crate::{element, service};
 
 pub enum Message {
     Init(Vec<Vec<Point>>),

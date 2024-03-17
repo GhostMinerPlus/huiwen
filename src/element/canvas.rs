@@ -1,8 +1,9 @@
 mod raw_canvas;
 
 use cgmath::*;
-use painting::point::Point;
-use yew::{classes, Callback};
+use js_sys::Math::exp;
+use painting::{point::Point, AsCanvas};
+use yew::{classes, Callback, KeyboardEvent, WheelEvent};
 
 use std::{
     io,
@@ -14,12 +15,23 @@ use winit::{dpi::PhysicalSize, event_loop::EventLoop, platform::web::EventLoopEx
 
 use self::raw_canvas::RawCanvas;
 
+// Public
+pub enum Command {
+    None,
+    Paint,
+    Move,
+    Scacle,
+}
+
 pub enum Message {
     Refresh,
     Create(EventLoop<()>),
-    StartPainting((f32, f32, f32, PhysicalSize<u32>)),
-    Paint((f32, f32, f32, PhysicalSize<u32>)),
-    EndLine,
+    EnableMoving,
+    DisableMoving,
+    StartMovingOrPainting((f32, f32, f32, f32, Option<f32>)),
+    EndMovingOrPainting,
+    MoveOrPaint((f32, f32, f32, f32, Option<f32>)),
+    Scacle(f32),
 }
 
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
@@ -35,8 +47,9 @@ pub struct Props {
 pub struct Canvas {
     canvas: yew::NodeRef,
     p_canvas: Arc<Mutex<Option<RawCanvas>>>,
-    painting: bool,
     last_edge: Vec<Point>,
+    enabled_moving: bool,
+    cmd: Command,
 }
 
 impl yew::Component for Canvas {
@@ -51,8 +64,9 @@ impl yew::Component for Canvas {
         Self {
             canvas,
             p_canvas,
-            painting: false,
             last_edge: Vec::default(),
+            enabled_moving: false,
+            cmd: Command::None,
         }
     }
 
@@ -70,27 +84,17 @@ impl yew::Component for Canvas {
             let x = e.offset_x() as f32;
             let y = e.offset_y() as f32;
 
-            let force = {
-                let v = cgmath::Vector2::new(
-                    (e.movement_x() as f32) / (sz.width as f32),
-                    (e.movement_y() as f32) / (sz.height as f32),
-                );
-                let force = 1. - v.magnitude() * 100.;
-                if force > 1. {
-                    1.
-                } else if force < 0. {
-                    0.
-                } else {
-                    force
-                }
-            };
+            let v = cgmath::Vector2::new(
+                (e.movement_x() as f32) / (sz.width as f32),
+                (e.movement_y() as f32) / (sz.height as f32),
+            );
 
-            link.send_message(Message::StartPainting((x, y, force, sz)));
+            link.send_message(Message::StartMovingOrPainting((v.x, v.y, x, y, None)));
         });
 
         let link = ctx.link().clone();
         let onmouseup = yew::Callback::from(move |_| {
-            link.send_message(Message::EndLine);
+            link.send_message(Message::EndMovingOrPainting);
         });
 
         let link = ctx.link().clone();
@@ -104,21 +108,11 @@ impl yew::Component for Canvas {
             let x = e.offset_x() as f32;
             let y = e.offset_y() as f32;
 
-            let force = {
-                let v = cgmath::Vector2::new(
-                    (e.movement_x() as f32) / (sz.width as f32),
-                    (e.movement_y() as f32) / (sz.height as f32),
-                );
-                let force = 1. - v.magnitude() * 100.;
-                if force > 1. {
-                    1.
-                } else if force < 0. {
-                    0.
-                } else {
-                    force
-                }
-            };
-            link.send_message(Message::Paint((x, y, force, sz)));
+            let v = cgmath::Vector2::new(
+                (e.movement_x() as f32) / (sz.width as f32),
+                (e.movement_y() as f32) / (sz.height as f32),
+            );
+            link.send_message(Message::MoveOrPaint((v.x, v.y, x, y, None)));
         });
 
         let link = ctx.link().clone();
@@ -132,17 +126,27 @@ impl yew::Component for Canvas {
             let x = e.offset_x() as f32;
             let y = e.offset_y() as f32;
 
+            let v = cgmath::Vector2::new(
+                (e.movement_x() as f32) / (sz.width as f32),
+                (e.movement_y() as f32) / (sz.height as f32),
+            );
             let force = if e.pointer_type() == "touch" {
                 e.pressure() / 10.
             } else {
                 e.pressure()
             };
-            link.send_message(Message::StartPainting((x, y, force, sz)));
+            link.send_message(Message::StartMovingOrPainting((
+                v.x,
+                v.y,
+                x,
+                y,
+                Some(force),
+            )));
         });
 
         let link = ctx.link().clone();
         let onpointerup = yew::Callback::from(move |_| {
-            link.send_message(Message::EndLine);
+            link.send_message(Message::EndMovingOrPainting);
         });
 
         let link = ctx.link().clone();
@@ -156,12 +160,38 @@ impl yew::Component for Canvas {
             let x = e.offset_x() as f32;
             let y = e.offset_y() as f32;
 
+            let v = cgmath::Vector2::new(
+                (e.movement_x() as f32) / (sz.width as f32),
+                (e.movement_y() as f32) / (sz.height as f32),
+            );
+
             let force = if e.pointer_type() == "touch" {
                 e.pressure() / 10.
             } else {
                 e.pressure()
             };
-            link.send_message(Message::Paint((x, y, force, sz)));
+            link.send_message(Message::MoveOrPaint((v.x, v.y, x, y, Some(force))));
+        });
+
+        let link = ctx.link().clone();
+        let on_key_down = Callback::from(move |e: KeyboardEvent| {
+            if e.key() == " " {
+                link.send_message(Message::EnableMoving);
+            }
+        });
+
+        let link = ctx.link().clone();
+        let on_key_up = Callback::from(move |e: KeyboardEvent| {
+            if e.key() == " " {
+                link.send_message(Message::DisableMoving);
+            }
+        });
+
+        let link = ctx.link().clone();
+        let on_wheel = Callback::from(move |e: WheelEvent| {
+            let speed = e.delta_y() / 100.0;
+            log::debug!("wheel speed: {speed}");
+            link.send_message(Message::Scacle(exp(speed) as f32));
         });
 
         yew::html! {
@@ -172,7 +202,10 @@ impl yew::Component for Canvas {
                     {onmousemove}
                     {onpointerdown}
                     {onpointerup}
-                    {onpointermove}>
+                    {onpointermove}
+                    onkeydown={on_key_down}
+                    onkeyup={on_key_up}
+                    onwheel={on_wheel}>
                 </canvas>
             </div>
         }
@@ -210,38 +243,134 @@ impl yew::Component for Canvas {
                 raw_canvas.window.request_redraw();
                 false
             }
-            Message::StartPainting((x, y, force, sz)) => {
-                self.painting = true;
-                let mut op = self.p_canvas.lock().unwrap();
-                let raw_canvas = op.as_mut().unwrap();
-                let pt = raw_canvas.pen.px2point(x, y, force, sz);
-                raw_canvas.start_line(pt.clone());
-                raw_canvas.window.request_redraw();
-                self.last_edge.push(pt);
-                false
-            }
-            Message::Paint((x, y, force, sz)) => {
-                if self.painting {
-                    let mut op = self.p_canvas.lock().unwrap();
-                    let raw_canvas = op.as_mut().unwrap();
-                    let pt = raw_canvas.pen.px2point(x, y, force, sz);
-                    raw_canvas.push_point(pt.clone());
-                    raw_canvas.window.request_redraw();
-                    self.last_edge.push(pt);
+            Message::StartMovingOrPainting((vx, vy, x, y, force)) => {
+                match &self.cmd {
+                    Command::None => {
+                        if self.enabled_moving {
+                            log::debug!("start moving");
+                            self.cmd = Command::Move;
+                        } else {
+                            self.cmd = Command::Paint;
+                            let canvas = self.canvas.cast::<HtmlCanvasElement>();
+                            let sz = PhysicalSize::new(
+                                canvas.as_ref().unwrap().client_width() as u32,
+                                canvas.as_ref().unwrap().client_height() as u32,
+                            );
+                            let mut op = self.p_canvas.lock().unwrap();
+                            let raw_canvas = op.as_mut().unwrap();
+                            let mut pt = match force {
+                                Some(force) => raw_canvas.pen.px2point(x, y, force, sz),
+                                None => {
+                                    let v = cgmath::Vector2::new(vx, vy);
+                                    let force = {
+                                        let force = 1. - v.magnitude() * 100.;
+                                        if force > 1. {
+                                            1.
+                                        } else if force < 0. {
+                                            0.
+                                        } else {
+                                            force
+                                        }
+                                    };
+                                    raw_canvas.pen.px2point(x, y, force, sz)
+                                }
+                            };
+                            pt.pos.z = -1.0;
+                            raw_canvas.start_line(pt.clone());
+                            raw_canvas.window.request_redraw();
+                            self.last_edge.push(pt);
+                        }
+                    }
+                    _ => (),
                 }
                 false
             }
-            Message::EndLine => {
-                self.painting = false;
-                if self.last_edge.is_empty() {
-                    return false;
+            Message::EndMovingOrPainting => {
+                match &self.cmd {
+                    Command::Paint => {
+                        if self.last_edge.is_empty() {
+                            return false;
+                        }
+                        let mut op = self.p_canvas.lock().unwrap();
+                        let raw_canvas = op.as_mut().unwrap();
+                        raw_canvas.end_line();
+                        raw_canvas.window.request_redraw();
+                        ctx.props().commit.emit(self.last_edge.clone());
+                        self.last_edge.clear();
+                    }
+                    Command::Move => {
+                        log::debug!("end moving");
+                    }
+                    _ => (),
                 }
-                let mut op = self.p_canvas.lock().unwrap();
-                let raw_canvas = op.as_mut().unwrap();
-                raw_canvas.end_line();
-                raw_canvas.window.request_redraw();
-                ctx.props().commit.emit(self.last_edge.clone());
-                self.last_edge.clear();
+                self.cmd = Command::None;
+                false
+            }
+            Message::EnableMoving => {
+                self.enabled_moving = true;
+                false
+            }
+            Message::DisableMoving => {
+                self.enabled_moving = false;
+                false
+            }
+            Message::MoveOrPaint((vx, vy, x, y, force)) => {
+                match &self.cmd {
+                    Command::Move => {
+                        log::debug!("moving");
+                        let mut op = self.p_canvas.lock().unwrap();
+                        let raw_canvas = op.as_mut().unwrap();
+                        raw_canvas.move_content(vx, -vy, 0.0);
+                        raw_canvas.window.request_redraw();
+                    }
+                    Command::Paint => {
+                        let force = match force {
+                            Some(force) => force,
+                            None => {
+                                let v = cgmath::Vector2::new(vx, vy);
+
+                                let force = 1. - v.magnitude() * 100.;
+                                if force > 1. {
+                                    1.
+                                } else if force < 0. {
+                                    0.
+                                } else {
+                                    force
+                                }
+                            }
+                        };
+                        let mut op = self.p_canvas.lock().unwrap();
+                        let raw_canvas = op.as_mut().unwrap();
+                        let canvas = self.canvas.cast::<HtmlCanvasElement>();
+                        let sz = PhysicalSize::new(
+                            canvas.as_ref().unwrap().client_width() as u32,
+                            canvas.as_ref().unwrap().client_height() as u32,
+                        );
+                        let mut pt = raw_canvas.pen.px2point(x, y, force, sz);
+                        pt.pos.z = -1.0;
+
+                        raw_canvas.push_point(pt.clone());
+                        raw_canvas.window.request_redraw();
+                        self.last_edge.push(pt);
+                    }
+                    _ => (),
+                }
+                false
+            }
+            Message::Scacle(s) => {
+                match &self.cmd {
+                    Command::None | Command::Scacle => {
+                        self.cmd = Command::Scacle;
+
+                        let mut op = self.p_canvas.lock().unwrap();
+                        let raw_canvas = op.as_mut().unwrap();
+                        raw_canvas.scacle(s, s, 1.0);
+                        raw_canvas.window.request_redraw();
+
+                        self.cmd = Command::None;
+                    }
+                    _ => (),
+                }
                 false
             }
         }
