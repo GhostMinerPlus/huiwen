@@ -1,6 +1,8 @@
 use std::io;
 
+use painting::AsCanvas;
 use web_sys::HtmlCanvasElement;
+use wgpu::SurfaceError;
 use winit::{
     dpi::PhysicalSize,
     event::{Event, WindowEvent},
@@ -9,6 +11,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+// Public
 pub struct RawCanvas {
     canvas: painting::Canvas,
     pub window: Window,
@@ -91,37 +94,55 @@ impl RawCanvas {
                 );
                 self.canvas
                     .set_aspect((sz.width as f32) / (sz.height as f32));
-                self.render();
+                let _ = self.render();
             }
             _ => {}
         }
     }
+}
 
-    pub fn render(&mut self) {
-        self.canvas.render();
+impl painting::AsCanvas for RawCanvas {
+    fn render(&mut self) -> Result<(), SurfaceError> {
+        self.canvas.render()
     }
 
-    pub fn push_point(&mut self, pt: painting::point::Point) {
-        self.canvas.push_point(pt);
+    fn push_point(&mut self, pt: painting::point::Point) {
+        self.canvas.push_point(pt)
     }
 
-    pub fn start_line(&mut self, pt: painting::point::Point) {
-        self.canvas.start_line(pt);
+    fn start_line(&mut self, pt: painting::point::Point) {
+        self.canvas.start_line(pt)
     }
 
-    pub fn end_line(&mut self) {
-        self.canvas.end_line();
+    fn end_line(&mut self) {
+        self.canvas.end_line()
     }
 
-    pub fn cancle_line(&mut self) {
-        self.canvas.cancle_line();
+    fn cancle_line(&mut self) {
+        self.canvas.cancle_line()
     }
 
-    pub fn set_aspect(&mut self, aspect: f32) {
-        self.canvas.set_aspect(aspect);
+    fn set_aspect(&mut self, aspect: f32) {
+        self.canvas.set_aspect(aspect)
     }
 
-    pub fn clear(&mut self) {
-        self.canvas.clear();
+    fn clear(&mut self) {
+        self.canvas.clear()
+    }
+
+    fn get_size(&self) -> &PhysicalSize<u32> {
+        self.canvas.get_size()
+    }
+
+    fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        self.canvas.resize(new_size)
+    }
+
+    fn move_content(&mut self, x: f32, y: f32, z: f32) {
+        self.canvas.move_content(x, y, z)
+    }
+    
+    fn scacle(&mut self, x: f32, y: f32, z: f32) {
+        self.canvas.scacle(x, y, z)
     }
 }
