@@ -1,4 +1,4 @@
-use std::io;
+use std::{cmp::min, io};
 
 use cgmath::Point3;
 use painting::point::Point;
@@ -43,23 +43,21 @@ async fn execute(script: &str) -> io::Result<Vec<String>> {
 
 // Public
 pub async fn get_version() -> io::Result<String> {
-    let rs = execute("$ return huiwen->version").await?;
+    let rs = execute("$->$output = huiwen->version _").await?;
     Ok(rs[0].clone())
 }
 
 pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
-    let mut script = format!("$ $edge ?");
+    let mut script = format!("$->$edge = ? _");
 
     for pt in &edge {
         script = format!(
             r#"{script}
-$ clear $point
-
-$ $point ?
-$->$point pos {}
-$->$point color {}
-$->$point width {}
-$->$edge point $->$point"#,
+$->$point = ? _
+$->$point->pos = {} _
+$->$point->color = {} _
+$->$point->width = {} _
+$->$edge->point append $->$edge->point $->$point"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -67,7 +65,7 @@ $->$edge point $->$point"#,
     }
     execute(&format!(
         r#"{script}
-huiwen->canvas edge $->$edge"#
+huiwen->canvas->edge append huiwen->canvas->edge $->$edge"#
     ))
     .await?;
     Ok(())
@@ -75,27 +73,18 @@ huiwen->canvas edge $->$edge"#
 
 pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
     let mut edge_v = Vec::new();
-    let rs = execute("$ return huiwen->canvas->edge").await?;
-    for edge in &rs {
-        let script = format!(
-            r#"$ $path "{edge}->point"
-$ $item pos
-$ $item color
-$ $item width
-$ dump $
-$ return $->$result"#
-        );
+    let edge_h_v = execute("$->$output = huiwen->canvas->edge _").await?;
+    for edge_h in &edge_h_v {
         let mut edge = Vec::new();
-        let s = &execute(&script).await?[0];
-        let point_v = json::parse(s).unwrap();
-        for point in point_v.members() {
-            let pos = point["pos"].as_str().unwrap().to_string();
-            let color = point["color"].as_str().unwrap().to_string();
-            let width = point["width"].as_str().unwrap().parse().unwrap();
+        let width_h_v = execute(&format!("$->$output = {edge_h}->point->width _")).await?;
+        let color_h_v = execute(&format!("$->$output = {edge_h}->point->color _")).await?;
+        let pos_h_v = execute(&format!("$->$output = {edge_h}->point->pos _")).await?;
+        let sz = min(width_h_v.len(), min(color_h_v.len(), pos_h_v.len()));
+        for i in 0..sz {
             edge.push(Point {
-                pos: str_to_p3(&pos),
-                color: str_to_c4(&color),
-                width,
+                pos: str_to_p3(&pos_h_v[i]),
+                color: str_to_c4(&color_h_v[i]),
+                width: width_h_v[i].parse().unwrap(),
             });
         }
         edge_v.push(edge);
@@ -105,26 +94,11 @@ $ return $->$result"#
 
 pub async fn clear() -> io::Result<()> {
     let script = format!(
-        r#"huiwen->canvas clear edge
-$ $junk ?
-
-$->$junk $code point
-$->$junk $source_code edge
-$ dc_ns $->$junk
-
-$->$junk clear $code
-$->$junk clear source_code
-$->$junk $code pos
-$->$junk $source_code point
-$ dc_ns $->$junk
-
-$->$junk clear $code
-$->$junk $code color
-$ dc_ns $->$junk
-
-$->$junk clear $code
-$->$junk $code width
-$ dc_ns $->$junk"#
+        r#"huiwen->canvas->edge->point->width = _ _
+huiwen->canvas->edge->point->color = _ _
+huiwen->canvas->edge->point->pos = _ _
+huiwen->canvas->edge->point = _ _
+huiwen->canvas->edge = _ _"#
     );
     execute(&script).await?;
     Ok(())
