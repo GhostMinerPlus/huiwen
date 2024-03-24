@@ -28,9 +28,9 @@ fn str_to_c4(s: &str) -> [f32; 4] {
     [c4[0], c4[1], c4[2], c4[3]]
 }
 
-async fn execute(script: &str) -> io::Result<Vec<String>> {
+async fn execute(script_tree: json::JsonValue) -> io::Result<json::JsonValue> {
     let res = Request::new("/service/edge/execute")
-        .with_body_txt(script)?
+        .with_body_txt(&json::stringify(script_tree))?
         .send("POST")
         .await?;
     let rs = JsFuture::from(res.text().map_err(util::map_js_error)?)
@@ -38,13 +38,16 @@ async fn execute(script: &str) -> io::Result<Vec<String>> {
         .map_err(util::map_js_error)?
         .as_string()
         .ok_or(io::Error::new(io::ErrorKind::NotFound, "returned empty"))?;
-    Ok(serde_json::from_str(&rs).unwrap())
+    Ok(json::parse(&rs).unwrap())
 }
 
 // Public
 pub async fn get_version() -> io::Result<String> {
-    let rs = execute("$->$output = huiwen->version _").await?;
-    Ok(rs[0].clone())
+    let root = "$->$output = huiwen->version _".to_string();
+    let mut script_tree = json::object! {};
+    let _ = script_tree.insert(&root, json::Null);
+    let rs = execute(script_tree).await?;
+    Ok(rs[&root][0].as_str().unwrap().to_string())
 }
 
 pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
@@ -63,28 +66,53 @@ $->$edge->point append $->$edge->point $->$point"#,
             pt.width
         );
     }
-    execute(&format!(
+    let root = format!(
         r#"{script}
 huiwen->canvas->edge append huiwen->canvas->edge $->$edge"#
-    ))
-    .await?;
+    );
+    let mut script_tree = json::object! {};
+    let _ = script_tree.insert(&root, json::Null);
+    execute(script_tree).await?;
     Ok(())
 }
 
 pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
+    let mut script_tree = json::object! {};
+    // $->$output = huiwen->canvas->edge _
+    let huiwen_canvas_edge = {
+        let mut huiwen_canvas_edge = json::object! {};
+        // $->$output = $->$input->point->width _
+        let _ = huiwen_canvas_edge.insert("$->$output = $->$input->point->width _", json::Null);
+        // $->$output = $->$input->point->color _
+        let _ = huiwen_canvas_edge.insert("$->$output = $->$input->point->color _", json::Null);
+        // $->$output = $->$input->point->pos _
+        let _ = huiwen_canvas_edge.insert("$->$output = $->$input->point->pos _", json::Null);
+        huiwen_canvas_edge
+    };
+    let _ = script_tree.insert("$->$output = huiwen->canvas->edge _", huiwen_canvas_edge);
+
+    let r_tree = execute(script_tree).await?;
+
     let mut edge_v = Vec::new();
-    let edge_h_v = execute("$->$output = huiwen->canvas->edge _").await?;
-    for edge_h in &edge_h_v {
+    let width_h_v2 =
+        &r_tree["$->$output = huiwen->canvas->edge _"]["$->$output = $->$input->point->width _"];
+    let color_h_v2 =
+        &r_tree["$->$output = huiwen->canvas->edge _"]["$->$output = $->$input->point->color _"];
+    let pos_h_v2 =
+        &r_tree["$->$output = huiwen->canvas->edge _"]["$->$output = $->$input->point->pos _"];
+    for i in 0..width_h_v2.len() {
         let mut edge = Vec::new();
-        let width_h_v = execute(&format!("$->$output = {edge_h}->point->width _")).await?;
-        let color_h_v = execute(&format!("$->$output = {edge_h}->point->color _")).await?;
-        let pos_h_v = execute(&format!("$->$output = {edge_h}->point->pos _")).await?;
-        let sz = min(width_h_v.len(), min(color_h_v.len(), pos_h_v.len()));
-        for i in 0..sz {
+        let width_h_v = &width_h_v2[i];
+        let color_h_v = &color_h_v2[i];
+        let pos_h_v = &pos_h_v2[i];
+        for j in 0..width_h_v.len() {
+            let width_h = width_h_v[j].as_str().unwrap();
+            let color_h = color_h_v[j].as_str().unwrap();
+            let pos_h = pos_h_v[j].as_str().unwrap();
             edge.push(Point {
-                pos: str_to_p3(&pos_h_v[i]),
-                color: str_to_c4(&color_h_v[i]),
-                width: width_h_v[i].parse().unwrap(),
+                pos: str_to_p3(pos_h),
+                color: str_to_c4(color_h),
+                width: width_h.parse().unwrap(),
             });
         }
         edge_v.push(edge);
@@ -93,13 +121,15 @@ pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
 }
 
 pub async fn clear() -> io::Result<()> {
-    let script = format!(
+    let root = format!(
         r#"huiwen->canvas->edge->point->width = _ _
 huiwen->canvas->edge->point->color = _ _
 huiwen->canvas->edge->point->pos = _ _
 huiwen->canvas->edge->point = _ _
 huiwen->canvas->edge = _ _"#
     );
-    execute(&script).await?;
+    let mut script_tree = json::object! {};
+    script_tree.insert(&root, json::Null);
+    execute(script_tree).await?;
     Ok(())
 }
