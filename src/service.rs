@@ -1,4 +1,4 @@
-use std::{cmp::min, io};
+use std::io;
 
 use cgmath::Point3;
 use painting::point::Point;
