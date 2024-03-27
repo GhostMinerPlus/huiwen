@@ -1,4 +1,4 @@
-use std::{cmp::min, io};
+use std::io;
 
 use cgmath::Point3;
 use painting::point::Point;
@@ -43,7 +43,7 @@ async fn execute(script_tree: json::JsonValue) -> io::Result<json::JsonValue> {
 
 // Public
 pub async fn get_version() -> io::Result<String> {
-    let root = "$->$output = huiwen->version _".to_string();
+    let root = "$->$output = = huiwen->version _".to_string();
     let mut script_tree = json::object! {};
     let _ = script_tree.insert(&root, json::Null);
     let rs = execute(script_tree).await?;
@@ -51,16 +51,16 @@ pub async fn get_version() -> io::Result<String> {
 }
 
 pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
-    let mut script = format!("$->$edge = ? _");
+    let mut script = format!("$->$edge = = ? _");
 
     for pt in &edge {
         script = format!(
             r#"{script}
-$->$point = ? _
-$->$point->pos = {} _
-$->$point->color = {} _
-$->$point->width = {} _
-$->$edge->point append $->$edge->point $->$point"#,
+$->$point = = ? _
+$->$point->pos = = {} _
+$->$point->color = = {} _
+$->$point->width = = {} _
+$->$edge->point += = $->$point _"#,
             p3_to_str(&pt.pos),
             c4_to_str(&pt.color),
             pt.width
@@ -68,7 +68,7 @@ $->$edge->point append $->$edge->point $->$point"#,
     }
     let root = format!(
         r#"{script}
-huiwen->canvas->edge append huiwen->canvas->edge $->$edge"#
+huiwen->canvas->edge += = $->$edge _"#
     );
     let mut script_tree = json::object! {};
     let _ = script_tree.insert(&root, json::Null);
@@ -82,24 +82,24 @@ pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
     let huiwen_canvas_edge = {
         let mut huiwen_canvas_edge = json::object! {};
         // $->$output = $->$input->point->width _
-        let _ = huiwen_canvas_edge.insert("$->$output = $->$input->point->width _", json::Null);
+        let _ = huiwen_canvas_edge.insert("$->$output = = $->$input->point->width _", json::Null);
         // $->$output = $->$input->point->color _
-        let _ = huiwen_canvas_edge.insert("$->$output = $->$input->point->color _", json::Null);
+        let _ = huiwen_canvas_edge.insert("$->$output = = $->$input->point->color _", json::Null);
         // $->$output = $->$input->point->pos _
-        let _ = huiwen_canvas_edge.insert("$->$output = $->$input->point->pos _", json::Null);
+        let _ = huiwen_canvas_edge.insert("$->$output = = $->$input->point->pos _", json::Null);
         huiwen_canvas_edge
     };
-    let _ = script_tree.insert("$->$output = huiwen->canvas->edge _", huiwen_canvas_edge);
+    let _ = script_tree.insert("$->$output = = huiwen->canvas->edge _", huiwen_canvas_edge);
 
     let r_tree = execute(script_tree).await?;
 
     let mut edge_v = Vec::new();
     let width_h_v2 =
-        &r_tree["$->$output = huiwen->canvas->edge _"]["$->$output = $->$input->point->width _"];
+        &r_tree["$->$output = = huiwen->canvas->edge _"]["$->$output = = $->$input->point->width _"];
     let color_h_v2 =
-        &r_tree["$->$output = huiwen->canvas->edge _"]["$->$output = $->$input->point->color _"];
+        &r_tree["$->$output = = huiwen->canvas->edge _"]["$->$output = = $->$input->point->color _"];
     let pos_h_v2 =
-        &r_tree["$->$output = huiwen->canvas->edge _"]["$->$output = $->$input->point->pos _"];
+        &r_tree["$->$output = = huiwen->canvas->edge _"]["$->$output = = $->$input->point->pos _"];
     for i in 0..width_h_v2.len() {
         let mut edge = Vec::new();
         let width_h_v = &width_h_v2[i];
@@ -122,14 +122,14 @@ pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
 
 pub async fn clear() -> io::Result<()> {
     let root = format!(
-        r#"huiwen->canvas->edge->point->width = _ _
-huiwen->canvas->edge->point->color = _ _
-huiwen->canvas->edge->point->pos = _ _
-huiwen->canvas->edge->point = _ _
-huiwen->canvas->edge = _ _"#
+        r#"huiwen->canvas->edge->point->width = = _ _
+huiwen->canvas->edge->point->color = = _ _
+huiwen->canvas->edge->point->pos = = _ _
+huiwen->canvas->edge->point = = _ _
+huiwen->canvas->edge = = _ _"#
     );
     let mut script_tree = json::object! {};
-    script_tree.insert(&root, json::Null);
+    let _ = script_tree.insert(&root, json::Null);
     execute(script_tree).await?;
     Ok(())
 }
