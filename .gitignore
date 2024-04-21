@@ -1,7 +1,5 @@
 /dist/
 /target/
 /.vscode/
-build.sh
 config.toml
-Dockerfile
 start.sh
