@@ -1,5 +1,3 @@
 /dist/
 /target/
 /.vscode/
-config.toml
-start.sh
