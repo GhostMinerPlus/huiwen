@@ -1,7 +1,8 @@
 FROM rust_builder:v0.1.0 as builder
 WORKDIR /root/share/repository/huiwen
 COPY . .
-RUN cargo install trunk && \
+RUN rustup target add wasm32-unknown-unknown && \
+    cargo install trunk && \
     /root/.cargo/bin/trunk build --release
 
 FROM light:v0.1.7
