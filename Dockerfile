@@ -1,7 +1,7 @@
 FROM wasm_builder:v0.1.0 as builder
 WORKDIR /root/share/repository/huiwen
 COPY . .
-RUN trunk build --release
+RUN /root/.cargo/bin/trunk build --release
 
 FROM light:v0.1.8-dev
 COPY --from=builder /root/share/repository/huiwen/dist/ /root/share/server/huiwen/dist
