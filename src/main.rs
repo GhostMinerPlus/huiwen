@@ -1,11 +1,4 @@
-mod component;
-mod element;
-
-mod page;
-mod router;
-mod service;
-
-mod util;
+use huiwen::page;
 
 fn main() {
     let _ = console_log::init_with_level(log::Level::Debug);

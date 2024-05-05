@@ -95,7 +95,7 @@ impl yew::Component for Main {
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Message::Init(version) => {
                 log::info!("version: {version}");
