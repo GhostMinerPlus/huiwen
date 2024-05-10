@@ -30,7 +30,7 @@ fn str_to_c4(s: &str) -> [f32; 4] {
 }
 
 async fn execute(script_tree: &ScriptTree) -> io::Result<json::JsonValue> {
-    let res = Request::new("/service/edge/execute")
+    let res = Request::new("/service/edge/execute1")
         .with_body_txt(&serde_json::to_string(script_tree).unwrap())?
         .send("POST")
         .await?;
