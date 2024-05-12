@@ -36,7 +36,6 @@ impl RawCanvas {
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         window.set_inner_size(sz);
         html_canvas.style().set_css_text("");
-        window.set_inner_size(sz);
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -93,6 +92,11 @@ impl RawCanvas {
             }
             _ => {}
         }
+    }
+
+    pub fn set_size(&self, sz: PhysicalSize<u32>) {
+        self.window.set_inner_size(sz);
+        self.html_canvas.style().set_css_text("");
     }
 }
 
