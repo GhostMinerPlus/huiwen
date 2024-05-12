@@ -1,5 +1,7 @@
 mod page;
 
+use std::{thread::sleep, time::Duration};
+
 use yew::{html, Callback, Context, Html};
 
 use crate::{component::Modal, element, err, router, service, util};
@@ -10,6 +12,7 @@ pub use page::*;
 pub enum Message {
     Init(String),
     Error(err::Error),
+    ClearError,
 }
 
 pub struct Main {
@@ -80,6 +83,11 @@ impl yew::Component for Main {
             link.send_message(Self::Message::Error(e));
         });
 
+        let link = ctx.link().clone();
+        let on_clear_error = Callback::from(move |_| {
+            link.send_message(Self::Message::ClearError);
+        });
+
         html! {
             <div class={"main"}>
                 <div class={"main-header"}>{"Huiwen"}</div>
@@ -88,7 +96,7 @@ impl yew::Component for Main {
                     <router::Router on_error={on_error} />
                 </div>
                 if self.msg.is_some() {
-                    <Modal>
+                    <Modal close={on_clear_error}>
                         <div style={"padding: 1em;"}>{self.msg.clone().unwrap()}</div>
                     </Modal>
                 }
@@ -96,15 +104,27 @@ impl yew::Component for Main {
         }
     }
 
-    fn update(&mut self, _: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Message::Init(version) => {
                 log::info!("version: {version}");
                 false
             }
             Message::Error(e) => {
-                log::error!("{e}");
-                self.msg = Some(e.to_string());
+                if self.msg.is_some() {
+                    ctx.link().send_future(async {
+                        sleep(Duration::from_millis(500));
+                        Self::Message::Error(e)
+                    });
+                    false
+                } else {
+                    log::error!("{e}");
+                    self.msg = Some(e.to_string());
+                    true
+                }
+            }
+            Message::ClearError => {
+                self.msg = None;
                 true
             }
         }
