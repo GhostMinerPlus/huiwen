@@ -14,6 +14,7 @@ use winit::{
 // Public
 pub struct RawCanvas {
     canvas: painting::Canvas,
+    html_canvas: HtmlCanvasElement,
     pub window: Window,
     pub pen: painting::point::Pen,
 }
@@ -35,6 +36,7 @@ impl RawCanvas {
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         window.set_inner_size(sz);
         html_canvas.style().set_css_text("");
+        window.set_inner_size(sz);
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -50,6 +52,7 @@ impl RawCanvas {
 
         Ok(Self {
             canvas,
+            html_canvas,
             window,
             pen: painting::point::Pen::default(),
         })
@@ -57,7 +60,6 @@ impl RawCanvas {
 
     pub fn on_event(
         &mut self,
-        html_canvas: HtmlCanvasElement,
         event: Event<()>,
         _target: &EventLoopWindowTarget<()>,
         control_flow: &mut ControlFlow,
@@ -81,14 +83,12 @@ impl RawCanvas {
                 _ => {}
             },
             Event::RedrawRequested(window_id) if window_id == self.window.id() => {
-                let n_sz = PhysicalSize::new(
-                    html_canvas.client_width() as u32,
-                    html_canvas.client_height() as u32,
+                let sz = PhysicalSize::new(
+                    self.html_canvas.client_width() as u32,
+                    self.html_canvas.client_height() as u32,
                 );
-                let sz = self.get_size();
-                if n_sz != *sz {
-                    self.resize(n_sz);
-                }
+                self.canvas
+                    .set_aspect((sz.width as f32) / (sz.height as f32));
                 let _ = self.render();
             }
             _ => {}
