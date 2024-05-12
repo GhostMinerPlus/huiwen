@@ -258,10 +258,10 @@ impl yew::Component for Canvas {
                             self.cmd = Command::Move;
                         } else {
                             self.cmd = Command::Paint;
-                            let canvas = self.canvas.cast::<HtmlCanvasElement>();
+                            let canvas = self.canvas.cast::<HtmlCanvasElement>().unwrap();
                             let sz = PhysicalSize::new(
-                                canvas.as_ref().unwrap().client_width() as u32,
-                                canvas.as_ref().unwrap().client_height() as u32,
+                                canvas.client_width() as u32,
+                                canvas.client_height() as u32,
                             );
                             let mut op = self.p_canvas.lock().unwrap();
                             let raw_canvas = op.as_mut().unwrap();

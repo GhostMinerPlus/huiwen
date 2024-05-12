@@ -24,8 +24,10 @@ impl RawCanvas {
         event_loop: &EventLoop<()>,
     ) -> io::Result<Self> {
         let sz = PhysicalSize::new(
-            html_canvas.client_width() as u32,
-            html_canvas.client_height() as u32,
+            // html_canvas.client_width() as u32,
+            // html_canvas.client_height() as u32,
+            2048,
+            2048
         );
         let window = WindowBuilder::new()
             .with_canvas(Some(html_canvas))

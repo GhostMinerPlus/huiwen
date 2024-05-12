@@ -27,8 +27,7 @@ pub enum Message {
 #[derive(Default)]
 pub struct HomePage {
     edge_v: Vec<Vec<Point>>,
-    wdith: u32,
-    height: u32,
+    scale: u32,
 }
 
 impl yew::Component for HomePage {
@@ -45,8 +44,7 @@ impl yew::Component for HomePage {
         });
         Self {
             edge_v: Vec::new(),
-            wdith: 62,
-            height: 62,
+            scale: 62,
         }
     }
 
@@ -94,11 +92,7 @@ impl yew::Component for HomePage {
                     height={format!("calc(100% - 2em)")}
                     overflow_x={format!("overlay")}
                     overflow_y={format!("overlay")}>
-                    <element::Canvas
-                        width={format!("{}%", self.wdith)}
-                        height={format!("{}%", self.height)}
-                        {commit}
-                        {edge_v} />
+                    <element::Canvas {commit} {edge_v} />
                 </Column>
             </Column>
         }
@@ -146,14 +140,12 @@ impl yew::Component for HomePage {
                 false
             }
             Message::Bigger => {
-                self.wdith += 1;
-                self.height += 1;
-                true
+                self.scale += 1;
+                false
             }
             Message::Smaller => {
-                self.wdith -= 1;
-                self.height -= 1;
-                true
+                self.scale -= 1;
+                false
             }
         }
     }
