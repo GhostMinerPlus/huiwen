@@ -63,7 +63,7 @@ impl yew::Component for Modal {
                     <div style={format!("margin: auto auto;{}{}{}",
                         style_or("width", &props.width, None),
                         style_or("height", &props.height, None),
-                        style_or("background-color", &props.bk_color, None))}
+                        style_or("background-color", &props.bk_color, Some("white")))}
                         onclick={Callback::from(|e: web_sys::MouseEvent|{e.stop_propagation()})}>
                         {for props.children.iter()}
                     </div>
