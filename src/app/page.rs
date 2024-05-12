@@ -2,8 +2,7 @@ use painting::point::Point;
 use yew::Callback;
 
 use crate::{
-    component::{Column, Modal, Row},
-    element, service,
+    component::{Column, Modal, Row}, element, err, service
 };
 
 pub enum Message {
@@ -13,7 +12,7 @@ pub enum Message {
     Post(bool),
     PostPull,
     Clear,
-    Error(String),
+    Error(err::Error),
     ClearError,
 }
 
@@ -32,7 +31,7 @@ impl yew::Component for HomePage {
         ctx.link().send_future(async {
             match service::pull_edge_v().await {
                 Ok(r) => Self::Message::Init(r),
-                Err(e) => Self::Message::Error(format!("when get canvas\n:\t{e}")),
+                Err(e) => Self::Message::Error(e),
             }
         });
         Self::default()
@@ -98,7 +97,7 @@ impl yew::Component for HomePage {
                 ctx.link().send_future(async move {
                     match service::pull_edge_v().await {
                         Ok(r) => Self::Message::Pull(r),
-                        Err(e) => Self::Message::Error(format!("when get canvas\n:\t{e}")),
+                        Err(e) => Self::Message::Error(e),
                     }
                 });
                 false
@@ -112,13 +111,13 @@ impl yew::Component for HomePage {
                 ctx.link().send_future(async move {
                     match service::clear().await {
                         Ok(_) => Self::Message::Post(false),
-                        Err(e) => Self::Message::Error(format!("when get canvas\n:\t{e}")),
+                        Err(e) => Self::Message::Error(e),
                     }
                 });
                 true
             }
-            Message::Error(msg) => {
-                self.msg = Some(msg);
+            Message::Error(e) => {
+                self.msg = Some(e.to_string());
                 true
             }
             Message::ClearError => {
