@@ -1,7 +1,10 @@
 use painting::point::Point;
 use yew::Callback;
 
-use crate::{component::{Column, Row}, element, service};
+use crate::{
+    component::{Column, Row},
+    element, service,
+};
 
 pub enum Message {
     Init(Vec<Vec<Point>>),
@@ -59,7 +62,7 @@ impl yew::Component for HomePage {
                     <button onclick={pull}>{"Pull"}</button>
                     <button onclick={clear}>{"Clear"}</button>
                 </Row>
-                <element::Canvas {commit} {edge_v} />
+                <element::Canvas {commit} {edge_v} width={format!("100%")} flex={format!("1")} />
             </Column>
         }
     }
