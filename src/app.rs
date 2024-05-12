@@ -1,6 +1,6 @@
 mod page;
 
-use std::{thread::sleep, time::Duration};
+use std::time::Duration;
 
 use yew::{html, Callback, Context, Html};
 
@@ -113,7 +113,7 @@ impl yew::Component for Main {
             Message::Error(e) => {
                 if self.msg.is_some() {
                     ctx.link().send_future(async {
-                        sleep(Duration::from_millis(500));
+                        yew::platform::time::sleep(Duration::from_millis(500)).await;
                         Self::Message::Error(e)
                     });
                     false
