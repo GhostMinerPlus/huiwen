@@ -13,6 +13,8 @@ use std::{
 use web_sys::{HtmlCanvasElement, MouseEvent, PointerEvent};
 use winit::{dpi::PhysicalSize, event_loop::EventLoop, platform::web::EventLoopExtWebSys};
 
+use crate::util::style_or;
+
 use self::raw_canvas::RawCanvas;
 
 // Public
@@ -36,6 +38,10 @@ pub enum Message {
 
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
 pub struct Props {
+    #[prop_or_default]
+    pub width: String,
+    #[prop_or_default]
+    pub height: String,
     #[prop_or_default]
     pub commit: Callback<Vec<Point>>,
     #[prop_or_default]
@@ -190,8 +196,15 @@ impl yew::Component for Canvas {
             link.send_message(Message::Scacle(exp(speed) as f32));
         });
 
+        let style = format!(
+            "{}{}",
+            style_or("width", &ctx.props().width, None),
+            style_or("height", &ctx.props().height, None),
+        );
+
         yew::html! {
             <canvas ref={self.canvas.clone()}
+                {style}
                 {onmousedown}
                 {onmouseup}
                 {onmousemove}
