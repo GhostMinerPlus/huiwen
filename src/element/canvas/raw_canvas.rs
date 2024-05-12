@@ -33,8 +33,8 @@ impl RawCanvas {
             .with_canvas(Some(html_canvas.clone()))
             .build(&event_loop)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-        html_canvas.style().set_css_text("");
         window.set_inner_size(sz);
+        html_canvas.style().set_css_text("");
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
