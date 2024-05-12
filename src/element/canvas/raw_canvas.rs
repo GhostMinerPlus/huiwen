@@ -25,14 +25,15 @@ impl RawCanvas {
         event_loop: &EventLoop<()>,
     ) -> io::Result<Self> {
         let sz = PhysicalSize::new(
-            html_canvas.client_width() as u32,
-            html_canvas.client_height() as u32,
+            2048,
+            2048,
         );
         let window = WindowBuilder::new()
             .with_canvas(Some(html_canvas.clone()))
             .build(&event_loop)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         window.set_inner_size(sz);
+        html_canvas.style().set_css_text("");
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),

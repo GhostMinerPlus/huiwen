@@ -192,6 +192,7 @@ impl yew::Component for Canvas {
 
         yew::html! {
             <canvas ref={self.canvas.clone()}
+                class={"full"}
                 {onmousedown}
                 {onmouseup}
                 {onmousemove}

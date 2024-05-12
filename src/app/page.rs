@@ -89,9 +89,7 @@ impl yew::Component for HomePage {
                     <button onclick={smaller}>{"-"}</button>
                 </Row>
                 <Column
-                    height={format!("calc(100% - 2em)")}
-                    overflow_x={format!("overlay")}
-                    overflow_y={format!("overlay")}>
+                    height={format!("calc(100% - 2em)")}>
                     <element::Canvas {commit} {edge_v} />
                 </Column>
             </Column>
