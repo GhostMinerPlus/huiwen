@@ -103,6 +103,7 @@ impl yew::Component for Main {
                 false
             }
             Message::Error(e) => {
+                log::error!("{e}");
                 self.msg = Some(e.to_string());
                 true
             }
