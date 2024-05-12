@@ -220,11 +220,13 @@ impl yew::Component for Canvas {
     fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Message::Create(event_loop) => {
+                let canvas = self.canvas.clone();
                 let p_canvas = self.p_canvas.clone();
                 event_loop.spawn(move |event, target, control_flow| {
                     let mut op = p_canvas.lock().unwrap();
                     let raw_canvas = op.as_mut().unwrap();
-                    raw_canvas.on_event(event, target, control_flow);
+                    let html_canvas = canvas.cast::<HtmlCanvasElement>().unwrap();
+                    raw_canvas.on_event(html_canvas, event, target, control_flow);
                 });
                 ctx.link().send_message(Message::Refresh);
                 true

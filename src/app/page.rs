@@ -20,11 +20,15 @@ pub enum Message {
     PostPull,
     Clear,
     Error(err::Error),
+    Bigger,
+    Smaller,
 }
 
 #[derive(Default)]
 pub struct HomePage {
     edge_v: Vec<Vec<Point>>,
+    wdith: u32,
+    height: u32,
 }
 
 impl yew::Component for HomePage {
@@ -39,7 +43,11 @@ impl yew::Component for HomePage {
                 Err(e) => Self::Message::Error(e),
             }
         });
-        Self::default()
+        Self {
+            edge_v: Vec::new(),
+            wdith: 62,
+            height: 62,
+        }
     }
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
@@ -58,6 +66,16 @@ impl yew::Component for HomePage {
             link.send_message(Self::Message::Clear);
         });
 
+        let link = ctx.link().clone();
+        let bigger = Callback::from(move |_| {
+            link.send_message(Self::Message::Bigger);
+        });
+
+        let link = ctx.link().clone();
+        let smaller = Callback::from(move |_| {
+            link.send_message(Self::Message::Smaller);
+        });
+
         let edge_v = self.edge_v.clone();
 
         yew::html! {
@@ -69,15 +87,18 @@ impl yew::Component for HomePage {
                 <Row height={format!("1.5em")}>
                     <button onclick={pull}>{"Pull"}</button>
                     <button onclick={clear}>{"Clear"}</button>
+                    <button onclick={bigger}>{"+"}</button>
+                    <button onclick={smaller}>{"-"}</button>
                 </Row>
                 <Column
                     height={format!("calc(100% - 2em)")}
                     overflow_x={format!("overlay")}
                     overflow_y={format!("overlay")}>
                     <element::Canvas
-                        width={format!("100%")}
-                        height={format!("100%")}
-                        {commit} {edge_v} />
+                        width={format!("{}%", self.wdith)}
+                        height={format!("{}%", self.height)}
+                        {commit}
+                        {edge_v} />
                 </Column>
             </Column>
         }
@@ -123,6 +144,16 @@ impl yew::Component for HomePage {
             Message::Error(e) => {
                 ctx.props().on_error.emit(e);
                 false
+            }
+            Message::Bigger => {
+                self.wdith += 1;
+                self.height += 1;
+                true
+            }
+            Message::Smaller => {
+                self.wdith -= 1;
+                self.height -= 1;
+                true
             }
         }
     }

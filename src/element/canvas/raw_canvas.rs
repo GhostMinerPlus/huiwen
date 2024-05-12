@@ -54,6 +54,7 @@ impl RawCanvas {
 
     pub fn on_event(
         &mut self,
+        html_canvas: HtmlCanvasElement,
         event: Event<()>,
         _target: &EventLoopWindowTarget<()>,
         control_flow: &mut ControlFlow,
@@ -64,11 +65,11 @@ impl RawCanvas {
                 window_id,
             } if window_id == self.window.id() => match event {
                 WindowEvent::Resized(physical_size) => {
-                    self.canvas.resize(*physical_size);
+                    self.resize(*physical_size);
                     let _ = self.render();
                 }
                 WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                    self.canvas.resize(**new_inner_size);
+                    self.resize(**new_inner_size);
                     let _ = self.render();
                 }
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => {
@@ -77,6 +78,14 @@ impl RawCanvas {
                 _ => {}
             },
             Event::RedrawRequested(window_id) if window_id == self.window.id() => {
+                let n_sz = PhysicalSize::new(
+                    html_canvas.client_width() as u32,
+                    html_canvas.client_height() as u32,
+                );
+                let sz = self.get_size();
+                if n_sz != *sz {
+                    self.resize(n_sz);
+                }
                 let _ = self.render();
             }
             _ => {}
