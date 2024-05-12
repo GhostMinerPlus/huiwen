@@ -1,5 +1,3 @@
-use std::io;
-
 use painting::point::Point;
 use yew::Callback;
 
@@ -26,14 +24,9 @@ impl yew::Component for HomePage {
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future(async {
-            let rs: io::Result<Vec<Vec<Point>>> = async {
-                let edge_v = service::pull_edge_v().await?;
-                Ok(edge_v)
-            }
-            .await;
-            match rs {
+            match service::pull_edge_v().await {
                 Ok(r) => Self::Message::Init(r),
-                Err(e) => panic!("When get canvas: {e}"),
+                Err(e) => panic!("When get canvas\n:\t{e}"),
             }
         });
         Self::default()
@@ -82,12 +75,7 @@ impl yew::Component for HomePage {
             Message::Post(b) => b,
             Message::PostPull => {
                 ctx.link().send_future(async move {
-                    let rs: io::Result<Vec<Vec<Point>>> = async {
-                        let edge_v = service::pull_edge_v().await?;
-                        Ok(edge_v)
-                    }
-                    .await;
-                    match rs {
+                    match service::pull_edge_v().await {
                         Ok(r) => Self::Message::Pull(r),
                         Err(e) => panic!("When get canvas: {e}"),
                     }
@@ -101,8 +89,7 @@ impl yew::Component for HomePage {
             Message::Clear => {
                 self.edge_v.clear();
                 ctx.link().send_future(async move {
-                    let rs: io::Result<()> = async { service::clear().await }.await;
-                    match rs {
+                    match service::clear().await {
                         Ok(_) => Self::Message::Post(false),
                         Err(e) => panic!("When clear canvas: {e}"),
                     }

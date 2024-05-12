@@ -1,11 +1,12 @@
-use std::io;
-
 use cgmath::Point3;
 use painting::point::Point;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::JsFuture;
 
-use crate::util::{self, Request};
+use crate::{
+    err,
+    util::{self, Request},
+};
 
 fn p3_to_str(pt: &Point3<f32>) -> String {
     format!("{},{},{}", pt.x, pt.y, pt.z)
@@ -29,7 +30,7 @@ fn str_to_c4(s: &str) -> [f32; 4] {
     [c4[0], c4[1], c4[2], c4[3]]
 }
 
-async fn execute(script_tree: &ScriptTree) -> io::Result<json::JsonValue> {
+async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
     let res = Request::new("/service/edge/execute1")
         .with_body_txt(&serde_json::to_string(script_tree).unwrap())?
         .send("POST")
@@ -38,7 +39,7 @@ async fn execute(script_tree: &ScriptTree) -> io::Result<json::JsonValue> {
         .await
         .map_err(util::map_js_error)?
         .as_string()
-        .ok_or(io::Error::new(io::ErrorKind::NotFound, "returned empty"))?;
+        .ok_or(err::Error::Other("returned empty".to_string()))?;
     Ok(json::parse(&rs).unwrap())
 }
 
@@ -50,7 +51,7 @@ pub struct ScriptTree {
     pub next_v: Vec<ScriptTree>,
 }
 
-pub async fn get_version() -> io::Result<String> {
+pub async fn get_version() -> err::Result<String> {
     let rs = execute(&ScriptTree {
         script: "$->$output = = huiwen->version _".to_string(),
         name: format!("version"),
@@ -60,7 +61,7 @@ pub async fn get_version() -> io::Result<String> {
     Ok(rs["version"][0].as_str().unwrap().to_string())
 }
 
-pub async fn commit_edge(edge: Vec<Point>) -> io::Result<()> {
+pub async fn commit_edge(edge: Vec<Point>) -> err::Result<()> {
     let mut script = format!("$->$edge = = ? _");
 
     for pt in &edge {
@@ -89,7 +90,7 @@ huiwen->canvas->edge += = $->$edge _"#
     Ok(())
 }
 
-pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
+pub async fn pull_edge_v() -> err::Result<Vec<Vec<Point>>> {
     let r_tree = execute(&ScriptTree {
         script: format!("$->$output = = huiwen->canvas->edge _"),
         name: format!("edge"),
@@ -137,7 +138,7 @@ pub async fn pull_edge_v() -> io::Result<Vec<Vec<Point>>> {
     Ok(edge_v)
 }
 
-pub async fn clear() -> io::Result<()> {
+pub async fn clear() -> err::Result<()> {
     execute(&ScriptTree {
         script: [
             "huiwen->canvas->edge->point->width = = _ _",

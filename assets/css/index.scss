@@ -1,3 +1,120 @@
-@import 'style.scss';
-@import 'color.scss';
-@import 'size.scss';
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+
+    position: absolute;
+}
+
+.main {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    >.main-header {
+        @extend .importance-first;
+
+        width: 100%;
+        height: 1.5em;
+
+        font-size: 1.5rem;
+        color: #fff6d5;
+        font-family: sans-serif;
+        text-align: center;
+    }
+
+    >.main-content {
+        @extend .importance-second;
+
+        width: 100%;
+        height: calc(100% - 2.0em);
+        flex: 1;
+
+        display: flex;
+
+        >.menu {
+            width: 12em;
+            height: 100%;
+            border-right: 1px solid black;
+        }
+
+        >.page {
+            flex: 1;
+            height: 100%;
+
+            position: relative;
+        }
+    }
+}
+
+.menu {
+    @extend .importance-third;
+
+    display: flex;
+    flex-direction: column;
+
+    .node {
+        width: 100%;
+        height: 3em;
+
+        padding: 0.5em;
+        border-bottom: 1px solid black;
+    }
+}
+
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fat-box {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.content {
+    padding: 1em;
+    background-color: white;
+}
+
+.modal-bk {
+    @extend .center-container;
+
+    width: 100%;
+    height: 100%;
+
+    position: absolute;
+    background-color: rgba(0.5, 0.5, 0.5, 0.5);
+}
+
+.box {
+    width: 62%;
+
+    border-radius: 6px;
+
+    background: white;
+}
+
+.importance-first {
+    background: linear-gradient(to bottom right, #444444, #009a5b);
+}
+
+.importance-second {
+    background: linear-gradient(to bottom right, #444444, indianred);
+}
+
+.importance-third {
+    background-color: aqua;
+}
