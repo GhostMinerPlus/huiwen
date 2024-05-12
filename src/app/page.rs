@@ -1,9 +1,16 @@
-use std::io;
-
 use painting::point::Point;
 use yew::Callback;
 
-use crate::{element, service};
+use crate::{
+    component::{Column, Row},
+    element, err, service,
+};
+
+#[derive(yew::Properties, PartialEq)]
+pub struct Props {
+    #[prop_or_default]
+    pub on_error: Callback<err::Error>,
+}
 
 pub enum Message {
     Init(Vec<Vec<Point>>),
@@ -12,31 +19,33 @@ pub enum Message {
     Post(bool),
     PostPull,
     Clear,
+    Error(err::Error),
+    Bigger,
+    Smaller,
 }
 
 #[derive(Default)]
 pub struct HomePage {
     edge_v: Vec<Vec<Point>>,
+    scale: u32,
 }
 
 impl yew::Component for HomePage {
     type Message = Message;
 
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future(async {
-            let rs: io::Result<Vec<Vec<Point>>> = async {
-                let edge_v = service::pull_edge_v().await?;
-                Ok(edge_v)
-            }
-            .await;
-            match rs {
+            match service::pull_edge_v().await {
                 Ok(r) => Self::Message::Init(r),
-                Err(e) => panic!("When get canvas: {e}"),
+                Err(e) => Self::Message::Error(e),
             }
         });
-        Self::default()
+        Self {
+            edge_v: Vec::new(),
+            scale: 62,
+        }
     }
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
@@ -55,14 +64,35 @@ impl yew::Component for HomePage {
             link.send_message(Self::Message::Clear);
         });
 
+        let link = ctx.link().clone();
+        let bigger = Callback::from(move |_| {
+            link.send_message(Self::Message::Bigger);
+        });
+
+        let link = ctx.link().clone();
+        let smaller = Callback::from(move |_| {
+            link.send_message(Self::Message::Smaller);
+        });
+
         let edge_v = self.edge_v.clone();
 
         yew::html! {
-            <div class={"main-content-page"}>
-                <button onclick={pull}>{"Pull"}</button>
-                <button onclick={clear}>{"Clear"}</button>
-                <element::Canvas {commit} {edge_v} />
-            </div>
+            <Column
+                width={format!("calc(100% - 12.5em)")}
+                height={format!("100%")}
+                border={format!("1em solid transparent")}
+                justify_content={format!("space-between")}>
+                <Row height={format!("1.5em")}>
+                    <button onclick={pull}>{"Pull"}</button>
+                    <button onclick={clear}>{"Clear"}</button>
+                    <button onclick={bigger}>{"+"}</button>
+                    <button onclick={smaller}>{"-"}</button>
+                </Row>
+                <Column
+                    height={format!("calc(100% - 2em)")}>
+                    <element::Canvas {commit} {edge_v} />
+                </Column>
+            </Column>
         }
     }
 
@@ -82,14 +112,9 @@ impl yew::Component for HomePage {
             Message::Post(b) => b,
             Message::PostPull => {
                 ctx.link().send_future(async move {
-                    let rs: io::Result<Vec<Vec<Point>>> = async {
-                        let edge_v = service::pull_edge_v().await?;
-                        Ok(edge_v)
-                    }
-                    .await;
-                    match rs {
+                    match service::pull_edge_v().await {
                         Ok(r) => Self::Message::Pull(r),
-                        Err(e) => panic!("When get canvas: {e}"),
+                        Err(e) => Self::Message::Error(e),
                     }
                 });
                 false
@@ -101,13 +126,24 @@ impl yew::Component for HomePage {
             Message::Clear => {
                 self.edge_v.clear();
                 ctx.link().send_future(async move {
-                    let rs: io::Result<()> = async { service::clear().await }.await;
-                    match rs {
+                    match service::clear().await {
                         Ok(_) => Self::Message::Post(false),
-                        Err(e) => panic!("When clear canvas: {e}"),
+                        Err(e) => Self::Message::Error(e),
                     }
                 });
                 true
+            }
+            Message::Error(e) => {
+                ctx.props().on_error.emit(e);
+                false
+            }
+            Message::Bigger => {
+                self.scale += 1;
+                false
+            }
+            Message::Smaller => {
+                self.scale -= 1;
+                false
             }
         }
     }
