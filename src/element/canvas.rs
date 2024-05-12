@@ -8,7 +8,6 @@ use yew::{Callback, KeyboardEvent, WheelEvent};
 use std::{
     io,
     sync::{Arc, Mutex},
-    time::Duration,
 };
 
 use web_sys::{HtmlCanvasElement, MouseEvent, PointerEvent};
@@ -33,13 +32,10 @@ pub enum Message {
     EndMovingOrPainting,
     MoveOrPaint((f32, f32, f32, f32, Option<f32>)),
     Scacle(f32),
-    Resize(PhysicalSize<u32>),
 }
 
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
 pub struct Props {
-    pub width: u32,
-    pub height: u32,
     #[prop_or_default]
     pub commit: Callback<Vec<Point>>,
     #[prop_or_default]
@@ -59,15 +55,9 @@ impl yew::Component for Canvas {
 
     type Properties = Props;
 
-    fn create(ctx: &yew::Context<Self>) -> Self {
+    fn create(_: &yew::Context<Self>) -> Self {
         let canvas = yew::NodeRef::default();
         let p_canvas = Arc::new(Mutex::new(None));
-
-        let sz = PhysicalSize {
-            width: ctx.props().width,
-            height: ctx.props().height,
-        };
-        ctx.link().send_message(Self::Message::Resize(sz));
 
         Self {
             canvas,
@@ -373,19 +363,6 @@ impl yew::Component for Canvas {
                     }
                     _ => (),
                 }
-                false
-            }
-            Message::Resize(sz) => {
-                let op = self.p_canvas.lock().unwrap();
-                if op.is_none() {
-                    ctx.link().send_future(async move {
-                        yew::platform::time::sleep(Duration::from_millis(500)).await;
-                        Self::Message::Resize(sz)
-                    });
-                    return false;
-                }
-                let raw_canvas = op.as_ref().unwrap();
-                raw_canvas.set_size(sz);
                 false
             }
         }
