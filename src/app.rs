@@ -10,7 +10,6 @@ pub use page::*;
 pub enum Message {
     Init(String),
     Error(err::Error),
-    ClearError,
 }
 
 pub struct Main {
@@ -77,8 +76,8 @@ impl yew::Component for Main {
         });
 
         let link = ctx.link().clone();
-        let clear_err = Callback::from(move |_| {
-            link.send_message(Self::Message::ClearError);
+        let on_error = Callback::from(move |e: err::Error| {
+            link.send_message(Self::Message::Error(e));
         });
 
         html! {
@@ -86,11 +85,11 @@ impl yew::Component for Main {
                 <div class={"main-header"}>{"Huiwen"}</div>
                 <div class={"main-content"}>
                     <element::Tree {tree} switch={menu_switch} classes={"main-content-menu"} />
-                    <router::Router />
+                    <router::Router on_error={on_error} />
                 </div>
                 if self.msg.is_some() {
-                    <Modal close={clear_err}>
-                        <div>{self.msg.clone().unwrap()}</div>
+                    <Modal>
+                        <div style={"padding: 1em;"}>{self.msg.clone().unwrap()}</div>
                     </Modal>
                 }
             </div>
@@ -106,10 +105,6 @@ impl yew::Component for Main {
             Message::Error(e) => {
                 self.msg = Some(e.to_string());
                 true
-            }
-            Message::ClearError => {
-                self.msg = None;
-                false
             }
         }
     }

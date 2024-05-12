@@ -2,8 +2,15 @@ use painting::point::Point;
 use yew::Callback;
 
 use crate::{
-    component::{Column, Modal, Row}, element, err, service
+    component::{Column, Row},
+    element, err, service,
 };
+
+#[derive(yew::Properties, PartialEq)]
+pub struct Props {
+    #[prop_or_default]
+    pub on_error: Callback<err::Error>,
+}
 
 pub enum Message {
     Init(Vec<Vec<Point>>),
@@ -13,19 +20,17 @@ pub enum Message {
     PostPull,
     Clear,
     Error(err::Error),
-    ClearError,
 }
 
 #[derive(Default)]
 pub struct HomePage {
     edge_v: Vec<Vec<Point>>,
-    msg: Option<String>,
 }
 
 impl yew::Component for HomePage {
     type Message = Message;
 
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &yew::Context<Self>) -> Self {
         ctx.link().send_future(async {
@@ -53,11 +58,6 @@ impl yew::Component for HomePage {
             link.send_message(Self::Message::Clear);
         });
 
-        let link = ctx.link().clone();
-        let clear_err = Callback::from(move |_| {
-            link.send_message(Self::Message::ClearError);
-        });
-
         let edge_v = self.edge_v.clone();
 
         yew::html! {
@@ -70,11 +70,6 @@ impl yew::Component for HomePage {
                     <button onclick={clear}>{"Clear"}</button>
                 </Row>
                 <element::Canvas {commit} {edge_v} width={format!("100%")} flex={format!("1")} />
-                if self.msg.is_some() {
-                    <Modal close={clear_err}>
-                        <div>{self.msg.clone().unwrap()}</div>
-                    </Modal>
-                }
             </Column>
         }
     }
@@ -117,13 +112,9 @@ impl yew::Component for HomePage {
                 true
             }
             Message::Error(e) => {
-                self.msg = Some(e.to_string());
-                true
-            }
-            Message::ClearError => {
-                self.msg = None;
+                ctx.props().on_error.emit(e);
                 false
-            },
+            }
         }
     }
 }
