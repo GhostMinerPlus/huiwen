@@ -40,7 +40,7 @@ async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
         .map_err(util::map_js_error)?
         .as_string()
         .ok_or(err::Error::Other("returned empty".to_string()))?;
-    Ok(json::parse(&rs).unwrap())
+    json::parse(&rs).map_err(|_| err::Error::Other(rs))
 }
 
 // Public
