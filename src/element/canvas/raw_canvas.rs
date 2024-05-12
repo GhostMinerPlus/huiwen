@@ -30,9 +30,10 @@ impl RawCanvas {
             2048
         );
         let window = WindowBuilder::new()
-            .with_canvas(Some(html_canvas))
+            .with_canvas(Some(html_canvas.clone()))
             .build(&event_loop)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        html_canvas.style().set_css_text("");
         window.set_inner_size(sz);
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
