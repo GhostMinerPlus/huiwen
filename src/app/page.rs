@@ -62,7 +62,7 @@ impl yew::Component for HomePage {
 
         yew::html! {
             <Column
-                width={format!("100%")}
+                width={format!("calc(100% - 12.5em)")}
                 height={format!("100%")}
                 border={format!("1em solid transparent")}
                 justify_content={format!("space-between")}>
