@@ -2,7 +2,7 @@ use painting::point::Point;
 use yew::Callback;
 
 use crate::{
-    component::{Column, Row},
+    component::{Column, Modal, Row},
     element, service,
 };
 
@@ -13,11 +13,14 @@ pub enum Message {
     Post(bool),
     PostPull,
     Clear,
+    Error(String),
+    ClearError,
 }
 
 #[derive(Default)]
 pub struct HomePage {
     edge_v: Vec<Vec<Point>>,
+    msg: Option<String>,
 }
 
 impl yew::Component for HomePage {
@@ -29,7 +32,7 @@ impl yew::Component for HomePage {
         ctx.link().send_future(async {
             match service::pull_edge_v().await {
                 Ok(r) => Self::Message::Init(r),
-                Err(e) => panic!("When get canvas\n:\t{e}"),
+                Err(e) => Self::Message::Error(format!("when get canvas\n:\t{e}")),
             }
         });
         Self::default()
@@ -51,6 +54,11 @@ impl yew::Component for HomePage {
             link.send_message(Self::Message::Clear);
         });
 
+        let link = ctx.link().clone();
+        let clear_err = Callback::from(move |_| {
+            link.send_message(Self::Message::ClearError);
+        });
+
         let edge_v = self.edge_v.clone();
 
         yew::html! {
@@ -63,6 +71,11 @@ impl yew::Component for HomePage {
                     <button onclick={clear}>{"Clear"}</button>
                 </Row>
                 <element::Canvas {commit} {edge_v} width={format!("100%")} flex={format!("1")} />
+                if self.msg.is_some() {
+                    <Modal close={clear_err}>
+                        <div>{self.msg.clone().unwrap()}</div>
+                    </Modal>
+                }
             </Column>
         }
     }
@@ -85,7 +98,7 @@ impl yew::Component for HomePage {
                 ctx.link().send_future(async move {
                     match service::pull_edge_v().await {
                         Ok(r) => Self::Message::Pull(r),
-                        Err(e) => panic!("When get canvas: {e}"),
+                        Err(e) => Self::Message::Error(format!("when get canvas\n:\t{e}")),
                     }
                 });
                 false
@@ -99,11 +112,19 @@ impl yew::Component for HomePage {
                 ctx.link().send_future(async move {
                     match service::clear().await {
                         Ok(_) => Self::Message::Post(false),
-                        Err(e) => panic!("When clear canvas: {e}"),
+                        Err(e) => Self::Message::Error(format!("when get canvas\n:\t{e}")),
                     }
                 });
                 true
             }
+            Message::Error(msg) => {
+                self.msg = Some(msg);
+                true
+            }
+            Message::ClearError => {
+                self.msg = None;
+                false
+            },
         }
     }
 }
