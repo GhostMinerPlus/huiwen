@@ -39,10 +39,6 @@ pub enum Message {
 #[derive(Clone, Debug, yew::Properties, PartialEq)]
 pub struct Props {
     #[prop_or_default]
-    pub width: String,
-    #[prop_or_default]
-    pub height: String,
-    #[prop_or_default]
     pub commit: Callback<Vec<Point>>,
     #[prop_or_default]
     pub edge_v: Vec<Vec<Point>>,
@@ -196,15 +192,8 @@ impl yew::Component for Canvas {
             link.send_message(Message::Scacle(exp(speed) as f32));
         });
 
-        let style = format!(
-            "{}{}",
-            style_or("width", &ctx.props().width, None),
-            style_or("height", &ctx.props().height, None),
-        );
-
         yew::html! {
             <canvas ref={self.canvas.clone()}
-                {style}
                 {onmousedown}
                 {onmouseup}
                 {onmousemove}
@@ -220,12 +209,11 @@ impl yew::Component for Canvas {
     fn update(&mut self, ctx: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Message::Create(event_loop) => {
-                let canvas = self.canvas.clone();
                 let p_canvas = self.p_canvas.clone();
                 event_loop.spawn(move |event, target, control_flow| {
                     let mut op = p_canvas.lock().unwrap();
                     let raw_canvas = op.as_mut().unwrap();
-                    raw_canvas.on_event(canvas.clone(), event, target, control_flow);
+                    raw_canvas.on_event(event, target, control_flow);
                 });
                 ctx.link().send_message(Message::Refresh);
                 true
@@ -406,7 +394,14 @@ impl yew::Component for Canvas {
         ctx.link().send_future(async move {
             let rs: io::Result<Message> = async {
                 let event_loop = EventLoop::new();
-                let raw_canvas = RawCanvas::create(canvas.clone(), &event_loop).await?;
+                let html_canvas = canvas
+                    .cast::<HtmlCanvasElement>()
+                    // .as_ref()
+                    .ok_or(io::Error::new(
+                        io::ErrorKind::NotFound,
+                        "'HtmlCanvasElement' not found",
+                    ))?;
+                let raw_canvas = RawCanvas::create(html_canvas, &event_loop).await?;
                 let mut p_canvas = p_canvas.lock().unwrap();
                 *p_canvas = Some(raw_canvas);
                 Ok(Message::Create(event_loop))

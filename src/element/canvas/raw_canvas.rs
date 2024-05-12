@@ -19,25 +19,19 @@ pub struct RawCanvas {
 }
 
 impl RawCanvas {
-    pub async fn create(n_canvas: yew::NodeRef, event_loop: &EventLoop<()>) -> io::Result<Self> {
-        let sz = PhysicalSize::new(2048, 2048);
-        let window = {
-            let window = WindowBuilder::new()
-                .with_canvas(n_canvas.cast())
-                .build(&event_loop)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-            window.set_inner_size(sz);
-            window
-        };
-        n_canvas
-            .cast::<HtmlCanvasElement>()
-            .as_ref()
-            .ok_or(io::Error::new(
-                io::ErrorKind::NotFound,
-                "'HtmlCanvasElement' not found",
-            ))?
-            .style()
-            .set_css_text("");
+    pub async fn create(
+        html_canvas: HtmlCanvasElement,
+        event_loop: &EventLoop<()>,
+    ) -> io::Result<Self> {
+        let sz = PhysicalSize::new(
+            html_canvas.client_width() as u32,
+            html_canvas.client_height() as u32,
+        );
+        let window = WindowBuilder::new()
+            .with_canvas(Some(html_canvas))
+            .build(&event_loop)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        window.set_inner_size(sz);
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -60,7 +54,6 @@ impl RawCanvas {
 
     pub fn on_event(
         &mut self,
-        n_canvas: yew::NodeRef,
         event: Event<()>,
         _target: &EventLoopWindowTarget<()>,
         control_flow: &mut ControlFlow,
@@ -70,9 +63,13 @@ impl RawCanvas {
                 ref event,
                 window_id,
             } if window_id == self.window.id() => match event {
-                WindowEvent::Resized(physical_size) => self.canvas.resize(*physical_size),
+                WindowEvent::Resized(physical_size) => {
+                    self.canvas.resize(*physical_size);
+                    let _ = self.render();
+                }
                 WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                    self.canvas.resize(**new_inner_size)
+                    self.canvas.resize(**new_inner_size);
+                    let _ = self.render();
                 }
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => {
                     *control_flow = ControlFlow::Exit
@@ -80,20 +77,6 @@ impl RawCanvas {
                 _ => {}
             },
             Event::RedrawRequested(window_id) if window_id == self.window.id() => {
-                let sz = PhysicalSize::new(
-                    n_canvas
-                        .cast::<HtmlCanvasElement>()
-                        .as_ref()
-                        .unwrap()
-                        .client_width() as u32,
-                    n_canvas
-                        .cast::<HtmlCanvasElement>()
-                        .as_ref()
-                        .unwrap()
-                        .client_height() as u32,
-                );
-                self.canvas
-                    .set_aspect((sz.width as f32) / (sz.height as f32));
                 let _ = self.render();
             }
             _ => {}
@@ -141,7 +124,7 @@ impl painting::AsCanvas for RawCanvas {
     fn move_content(&mut self, x: f32, y: f32, z: f32) {
         self.canvas.move_content(x, y, z)
     }
-    
+
     fn scacle(&mut self, x: f32, y: f32, z: f32) {
         self.canvas.scacle(x, y, z)
     }

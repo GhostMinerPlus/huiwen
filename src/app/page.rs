@@ -74,8 +74,7 @@ impl yew::Component for HomePage {
                     height={format!("calc(100% - 2em)")}
                     overflow_x={format!("overlay")}
                     overflow_y={format!("overlay")}>
-                    <element::Canvas
-                        height={format!("62%")} {commit} {edge_v} />
+                    <element::Canvas {commit} {edge_v} />
                 </Column>
             </Column>
         }
