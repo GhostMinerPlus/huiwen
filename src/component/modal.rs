@@ -44,7 +44,7 @@ impl yew::Component for Modal {
 
         yew::create_portal(
             yew::html! {
-               <div style={"position: absolute;width: 100%;height: 100%;background-color: #7f7f7f7f;"} {onclick}>
+               <div style={"position: absolute;display: flex;width: 100%;height: 100%;background-color: #7f7f7f7f;"} {onclick}>
                     <div style={format!("margin: auto auto;{}{}{}",
                         style_or("width", &props.width, None),
                         style_or("height", &props.height, None),
