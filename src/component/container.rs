@@ -20,6 +20,8 @@ pub struct ColumnProps {
     #[prop_or_default]
     pub bk_color: String,
     #[prop_or_default]
+    pub overflow_x: String,
+    #[prop_or_default]
     pub overflow_y: String,
     #[prop_or_default]
     pub justify_content: String,
@@ -39,7 +41,7 @@ impl yew::Component for Column {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let style = format!(
-            "display: flex;flex-direction: column;{}{}{}{}{}{}{}{}{}",
+            "display: flex;flex-direction: column;{}{}{}{}{}{}{}{}{}{}",
             style_or("width", &ctx.props().width, None),
             style_or("height", &ctx.props().height, None),
             style_or("flex", &ctx.props().flex, None),
@@ -47,6 +49,7 @@ impl yew::Component for Column {
             style_or("margin", &ctx.props().margin, None),
             style_or("padding", &ctx.props().padding, None),
             style_or("background-color", &ctx.props().bk_color, None),
+            style_or("overflow-x", &ctx.props().overflow_x, None),
             style_or("overflow-y", &ctx.props().overflow_y, None),
             style_or("justify-content", &ctx.props().justify_content, None),
         );
@@ -77,6 +80,8 @@ pub struct RowProps {
     #[prop_or_default]
     pub overflow_x: String,
     #[prop_or_default]
+    pub overflow_y: String,
+    #[prop_or_default]
     pub justify_content: String,
     pub children: Children,
 }
@@ -94,7 +99,7 @@ impl yew::Component for Row {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let style = format!(
-            "display: flex;flex-direction: row;{}{}{}{}{}{}{}{}{}",
+            "display: flex;flex-direction: row;{}{}{}{}{}{}{}{}{}{}",
             style_or("width", &ctx.props().width, None),
             style_or("height", &ctx.props().height, None),
             style_or("flex", &ctx.props().flex, None),
@@ -103,6 +108,7 @@ impl yew::Component for Row {
             style_or("padding", &ctx.props().padding, None),
             style_or("background-color", &ctx.props().bk_color, None),
             style_or("overflow-x", &ctx.props().overflow_x, None),
+            style_or("overflow-y", &ctx.props().overflow_y, None),
             style_or("justify-content", &ctx.props().justify_content, None),
         );
         html! {

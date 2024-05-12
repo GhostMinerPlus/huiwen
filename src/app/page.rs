@@ -71,7 +71,9 @@ impl yew::Component for HomePage {
                     <button onclick={clear}>{"Clear"}</button>
                 </Row>
                 <Column
-                    height={format!("calc(100% - 2em)")}>
+                    height={format!("calc(100% - 2em)")}
+                    overflow_x={format!("overlay")}
+                    overflow_y={format!("overlay")}>
                     <element::Canvas {commit} {edge_v} />
                 </Column>
             </Column>
