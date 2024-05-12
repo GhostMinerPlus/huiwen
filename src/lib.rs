@@ -1,5 +1,4 @@
 mod service;
-mod util;
 mod router;
 mod component;
 mod element;
@@ -7,3 +6,4 @@ mod element;
 // Public
 pub mod err;
 pub mod app;
+pub mod util;
