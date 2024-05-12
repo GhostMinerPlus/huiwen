@@ -64,12 +64,16 @@ impl yew::Component for HomePage {
             <Column
                 width={format!("100%")}
                 height={format!("100%")}
-                border={format!("1em solid transparent")}>
-                <Row>
+                border={format!("1em solid transparent")}
+                justify_content={format!("space-between")}>
+                <Row height={format!("1.5em")}>
                     <button onclick={pull}>{"Pull"}</button>
                     <button onclick={clear}>{"Clear"}</button>
                 </Row>
-                <element::Canvas {commit} {edge_v} width={format!("100%")} flex={format!("1")} />
+                <Column
+                    height={format!("calc(100% - 2em)")}>
+                    <element::Canvas {commit} {edge_v} />
+                </Column>
             </Column>
         }
     }

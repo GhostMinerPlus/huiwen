@@ -39,9 +39,9 @@ async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
         .await
         .map_err(util::map_js_error)?
         .as_string()
-        .ok_or(err::Error::Other("returned none".to_string()))?;
+        .ok_or(err::Error::Other("when execute:\n\treturned none".to_string()))?;
     if rs.is_empty() {
-        return Err(err::Error::Other("returned empty".to_string()));
+        return Err(err::Error::Other("when execute:\n\treturned empty".to_string()));
     }
     json::parse(&rs).map_err(|_| err::Error::Other(rs))
 }
