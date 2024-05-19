@@ -17,7 +17,7 @@ pub enum Message {
 
 pub struct Main {
     base_uri: String,
-    msg: Option<String>,
+    err_msg_op: Option<String>,
 }
 
 impl yew::Component for Main {
@@ -50,7 +50,7 @@ impl yew::Component for Main {
         };
         Self {
             base_uri,
-            msg: None,
+            err_msg_op: None,
         }
     }
 
@@ -95,9 +95,9 @@ impl yew::Component for Main {
                     <element::Tree {tree} switch={menu_switch} classes={"main-content-menu"} />
                     <router::Router on_error={on_error} />
                 </div>
-                if self.msg.is_some() {
+                if self.err_msg_op.is_some() {
                     <Modal close={on_clear_error}>
-                        <div style={"padding: 1em;"}>{self.msg.clone().unwrap()}</div>
+                        <div style={"padding: 1em;"}>{self.err_msg_op.clone().unwrap()}</div>
                     </Modal>
                 }
             </div>
@@ -111,7 +111,7 @@ impl yew::Component for Main {
                 false
             }
             Message::Error(e) => {
-                if self.msg.is_some() {
+                if self.err_msg_op.is_some() {
                     ctx.link().send_future(async {
                         yew::platform::time::sleep(Duration::from_millis(500)).await;
                         Self::Message::Error(e)
@@ -119,12 +119,20 @@ impl yew::Component for Main {
                     false
                 } else {
                     log::error!("{e}");
-                    self.msg = Some(e.to_string());
-                    true
+                    match e {
+                        err::Error::Other(msg) => {
+                            self.err_msg_op = Some(msg);
+                            true
+                        }
+                        err::Error::NotLogin => {
+                            // util::get_location().unwrap().replace("url").unwrap();
+                            todo!()
+                        }
+                    }
                 }
             }
             Message::ClearError => {
-                self.msg = None;
+                self.err_msg_op = None;
                 true
             }
         }
