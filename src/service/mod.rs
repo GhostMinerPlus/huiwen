@@ -43,7 +43,7 @@ async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
             "when execute:\n\treturned none".to_string(),
         ))?;
     match res.status() {
-        301 => {
+        401 => {
             return Err(err::Error::NotLogin);
         }
         500 => {
