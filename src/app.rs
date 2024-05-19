@@ -97,7 +97,8 @@ impl yew::Component for Main {
                 </div>
                 if self.err_msg_op.is_some() {
                     <Modal close={on_clear_error}>
-                        <div style={"padding: 1em;"}>{self.err_msg_op.clone().unwrap()}</div>
+                        <div style={"padding: 1em;background-color: red;"}>{"Error"}</div>
+                        <pre style={"padding: 1em;"}>{self.err_msg_op.clone().unwrap()}</pre>
                     </Modal>
                 }
             </div>
@@ -119,16 +120,18 @@ impl yew::Component for Main {
                     false
                 } else {
                     log::error!("{e}");
-                    match e {
-                        err::Error::Other(msg) => {
-                            self.err_msg_op = Some(msg);
-                            true
-                        }
-                        err::Error::NotLogin => {
-                            // util::get_location().unwrap().replace("url").unwrap();
-                            todo!()
-                        }
-                    }
+                    self.err_msg_op = Some(e.to_string());
+                    true
+                    // match e {
+                    //     err::Error::Other(msg) => {
+                    //         self.err_msg_op = Some(msg);
+                    //         true
+                    //     }
+                    //     err::Error::NotLogin => {
+                    //         // util::get_location().unwrap().replace("url").unwrap();
+                    //         todo!()
+                    //     }
+                    // }
                 }
             }
             Message::ClearError => {
