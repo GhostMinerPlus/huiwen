@@ -39,9 +39,18 @@ async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
         .await
         .map_err(util::map_js_error)?
         .as_string()
-        .ok_or(err::Error::Other("when execute:\n\treturned none".to_string()))?;
-    if rs.is_empty() {
-        return Err(err::Error::Other("when execute:\n\treturned empty".to_string()));
+        .ok_or(err::Error::Other(
+            "when execute:\n\treturned none".to_string(),
+        ))?;
+    match res.status() {
+        301 => {
+            return Err(err::Error::NotLogin);
+        }
+        500 => {
+            log::warn!("when execute:\n\t{rs}");
+            return Err(err::Error::Other(rs));
+        }
+        _ => (),
     }
     json::parse(&rs).map_err(|_| err::Error::Other(rs))
 }
