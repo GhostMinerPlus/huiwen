@@ -21,7 +21,7 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
             }
         }
         err::Error::NotLogin => html! {
-            <element::LoginModal />
+            <element::LoginModal login_uri={"service/edge/login"} register_uri={"service/edge/register"} />
         },
     }
 }
@@ -103,10 +103,7 @@ impl yew::Component for Main {
             link.send_message(Self::Message::Error(e));
         });
 
-        let modal_op = self
-            .err_msg_op
-            .as_ref()
-            .map(|e| build_error_modal(ctx, e));
+        let modal_op = self.err_msg_op.as_ref().map(|e| build_error_modal(ctx, e));
 
         html! {
             <div class={"main"}>
