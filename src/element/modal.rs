@@ -108,6 +108,7 @@ impl yew::Component for LoginModal {
                 let uri = ctx.props().login_uri.clone();
                 ctx.link().send_future(async move {
                     match util::Request::new(&uri)
+                        .with_header("Content-Type", "application/json")
                         .with_body_str(&format!(
                             "{{\"email\":\"{email}\",\"password\":\"{password}\"}}"
                         ))
@@ -127,6 +128,7 @@ impl yew::Component for LoginModal {
                 let uri = ctx.props().register_uri.clone();
                 ctx.link().send_future(async move {
                     match util::Request::new(&uri)
+                        .with_header("Content-Type", "application/json")
                         .with_body_str(&format!(
                             "{{\"email\":\"{email}\",\"password\":\"{password}\"}}"
                         ))
