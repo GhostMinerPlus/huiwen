@@ -21,7 +21,7 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
             }
         }
         err::Error::NotLogin => html! {
-            <element::LoginModal login_uri={"service/edge/login"} register_uri={"service/edge/register"} />
+            <element::LoginModal login_uri={"/service/edge/login"} register_uri={"/service/edge/register"} />
         },
     }
 }
