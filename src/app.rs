@@ -6,6 +6,26 @@ use yew::{html, Callback, Context, Html};
 
 use crate::{component::Modal, element, err, router, service, util};
 
+fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
+    match e {
+        err::Error::Other(msg) => {
+            let link = ctx.link().clone();
+            let on_clear_error = Callback::from(move |_| {
+                link.send_message(Message::ClearError);
+            });
+            html! {
+                <Modal close={on_clear_error}>
+                    <div style={"padding: 1em;background-color: red;width: 100%;"}>{"Error"}</div>
+                    <pre style={"padding: 1em;flex: 1;width: 100%;"}>{msg.clone()}</pre>
+                </Modal>
+            }
+        }
+        err::Error::NotLogin => html! {
+            <element::LoginModal />
+        },
+    }
+}
+
 // Public
 pub use page::*;
 
@@ -17,7 +37,7 @@ pub enum Message {
 
 pub struct Main {
     base_uri: String,
-    err_msg_op: Option<String>,
+    err_msg_op: Option<err::Error>,
 }
 
 impl yew::Component for Main {
@@ -83,10 +103,10 @@ impl yew::Component for Main {
             link.send_message(Self::Message::Error(e));
         });
 
-        let link = ctx.link().clone();
-        let on_clear_error = Callback::from(move |_| {
-            link.send_message(Self::Message::ClearError);
-        });
+        let modal_op = self
+            .err_msg_op
+            .as_ref()
+            .map(|e| build_error_modal(ctx, e));
 
         html! {
             <div class={"main"}>
@@ -95,11 +115,8 @@ impl yew::Component for Main {
                     <element::Tree {tree} switch={menu_switch} classes={"main-content-menu"} />
                     <router::Router on_error={on_error} />
                 </div>
-                if self.err_msg_op.is_some() {
-                    <Modal close={on_clear_error}>
-                        <div style={"padding: 1em;background-color: red;"}>{"Error"}</div>
-                        <pre style={"padding: 1em;"}>{self.err_msg_op.clone().unwrap()}</pre>
-                    </Modal>
+                if modal_op.is_some() {
+                    {modal_op.unwrap()}
                 }
             </div>
         }
@@ -120,18 +137,8 @@ impl yew::Component for Main {
                     false
                 } else {
                     log::error!("{e}");
-                    self.err_msg_op = Some(e.to_string());
+                    self.err_msg_op = Some(e);
                     true
-                    // match e {
-                    //     err::Error::Other(msg) => {
-                    //         self.err_msg_op = Some(msg);
-                    //         true
-                    //     }
-                    //     err::Error::NotLogin => {
-                    //         // util::get_location().unwrap().replace("url").unwrap();
-                    //         todo!()
-                    //     }
-                    // }
                 }
             }
             Message::ClearError => {
