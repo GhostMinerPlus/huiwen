@@ -1,5 +1,5 @@
 use web_sys::HtmlInputElement;
-use yew::{Callback, TargetCast};
+use yew::{Callback, MouseEvent, TargetCast};
 
 use crate::{
     component::{self, Row},
@@ -60,12 +60,14 @@ impl yew::Component for LoginModal {
         });
 
         let link = ctx.link().clone();
-        let on_register = Callback::from(move |_| {
+        let on_register = Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
             link.send_message(Msg::PostRegister);
         });
 
         let link = ctx.link().clone();
-        let on_login = Callback::from(move |_| {
+        let on_login = Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
             link.send_message(Msg::PostLogin);
         });
 
