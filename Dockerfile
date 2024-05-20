@@ -3,7 +3,7 @@ WORKDIR /root/share/repository/huiwen
 COPY . .
 RUN /root/.cargo/bin/trunk build --release
 
-FROM light:v0.1.12-dev
+FROM light:latest
 COPY --from=builder /root/share/repository/huiwen/dist/ /root/share/server/huiwen/dist
 WORKDIR /root/share/server/huiwen
 EXPOSE 80
