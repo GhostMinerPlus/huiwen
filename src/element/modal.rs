@@ -30,17 +30,20 @@ impl yew::Component for LoginModal {
     fn view(&self, _: &yew::Context<Self>) -> yew::Html {
         yew::html! {
             <component::Modal>
-                <div style={"padding: 1em;background-color: green;width: 100%;"}>{"Login"}</div>
-                <form style={"width: 100%;flex: 1;"}>
+                <div style={"padding: 1em;background-color: green;width: 100%;"}>{"Login/Register"}</div>
+                <form style={"width: 100%;flex: 1;padding: 1em;"}>
                     <Row width={"100%"}>
-                        <label for="username">{"邮箱："}</label>
+                        <label for="email">{"邮箱："}</label>
                         <input style={"flex: 1;"} type="text" name="username" required={true} />
                     </Row>
                     <Row width={"100%"}>
                         <label for="password">{"密码："}</label>
                         <input style={"flex: 1;"} type="password" name="password" required={true} />
                     </Row>
-                    <input type="submit" value="登录" />
+                    <Row width={"100%"}>
+                        <input type="submit" value="注册" />
+                        <input type="submit" value="登录" />
+                    </Row>
                 </form>
             </component::Modal>
         }
