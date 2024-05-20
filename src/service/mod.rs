@@ -32,7 +32,7 @@ fn str_to_c4(s: &str) -> [f32; 4] {
 
 async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
     let res = Request::new("/service/edge/execute1")
-        .with_body_txt(&serde_json::to_string(script_tree).unwrap())?
+        .with_body_str(&serde_json::to_string(script_tree).unwrap())?
         .send("POST")
         .await?;
     let rs = JsFuture::from(res.text().map_err(util::map_js_error)?)
