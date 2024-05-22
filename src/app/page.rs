@@ -112,8 +112,12 @@ impl yew::Component for HomePage {
                 false
             }
             Message::Refresh(edge_v) => {
-                self.edge_v = edge_v;
-                true
+                if edge_v.len() > self.edge_v.len() {
+                    self.edge_v = edge_v;
+                    true
+                } else {
+                    false
+                }
             }
             Message::Clear => {
                 self.edge_v.clear();
