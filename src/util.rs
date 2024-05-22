@@ -66,15 +66,7 @@ impl Request {
         self
     }
 
-    /// Set body of this request with a &[str].
-    ///
-    /// This method will parse the body in &[str] into [JsValue], so it may return a [Err] when failing to parse.
     pub fn with_body_str(&mut self, body: &str) -> err::Result<&mut Self> {
-        self.body = js_sys::JSON::parse(body).map_err(map_js_error)?;
-        Ok(self)
-    }
-
-    pub fn with_body_txt(&mut self, body: &str) -> err::Result<&mut Self> {
         self.body = JsValue::from_str(body);
         Ok(self)
     }

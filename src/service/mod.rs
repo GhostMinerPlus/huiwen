@@ -32,16 +32,25 @@ fn str_to_c4(s: &str) -> [f32; 4] {
 
 async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
     let res = Request::new("/service/edge/execute1")
-        .with_body_txt(&serde_json::to_string(script_tree).unwrap())?
+        .with_body_str(&serde_json::to_string(script_tree).unwrap())?
         .send("POST")
         .await?;
     let rs = JsFuture::from(res.text().map_err(util::map_js_error)?)
         .await
         .map_err(util::map_js_error)?
         .as_string()
-        .ok_or(err::Error::Other("when execute:\n\treturned none".to_string()))?;
-    if rs.is_empty() {
-        return Err(err::Error::Other("when execute:\n\treturned empty".to_string()));
+        .ok_or(err::Error::Other(
+            "when execute:\n\treturned none".to_string(),
+        ))?;
+    match res.status() {
+        401 => {
+            return Err(err::Error::NotLogin(format!("not login")));
+        }
+        500 => {
+            log::warn!("when execute:\n\t{rs}");
+            return Err(err::Error::Other(rs));
+        }
+        _ => (),
     }
     json::parse(&rs).map_err(|_| err::Error::Other(rs))
 }

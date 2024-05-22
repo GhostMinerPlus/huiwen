@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use painting::point::Point;
 use yew::Callback;
 
@@ -13,11 +15,10 @@ pub struct Props {
 }
 
 pub enum Message {
-    Init(Vec<Vec<Point>>),
     Commit(Vec<Point>),
-    Pull(Vec<Vec<Point>>),
+    Refresh(Vec<Vec<Point>>),
     Post(bool),
-    PostPull,
+    PostRefresh,
     Clear,
     Error(err::Error),
     Bigger,
@@ -36,12 +37,7 @@ impl yew::Component for HomePage {
     type Properties = Props;
 
     fn create(ctx: &yew::Context<Self>) -> Self {
-        ctx.link().send_future(async {
-            match service::pull_edge_v().await {
-                Ok(r) => Self::Message::Init(r),
-                Err(e) => Self::Message::Error(e),
-            }
-        });
+        ctx.link().send_message(Self::Message::PostRefresh);
         Self {
             edge_v: Vec::new(),
             scale: 62,
@@ -52,11 +48,6 @@ impl yew::Component for HomePage {
         let link = ctx.link().clone();
         let commit = Callback::from(move |pt_v| {
             link.send_message(Self::Message::Commit(pt_v));
-        });
-
-        let link = ctx.link().clone();
-        let pull = Callback::from(move |_| {
-            link.send_message(Self::Message::PostPull);
         });
 
         let link = ctx.link().clone();
@@ -83,7 +74,6 @@ impl yew::Component for HomePage {
                 border={format!("1em solid transparent")}
                 justify_content={format!("space-between")}>
                 <Row height={format!("1.5em")}>
-                    <button onclick={pull}>{"Pull"}</button>
                     <button onclick={clear}>{"Clear"}</button>
                     <button onclick={bigger}>{"+"}</button>
                     <button onclick={smaller}>{"-"}</button>
@@ -98,11 +88,8 @@ impl yew::Component for HomePage {
 
     fn update(&mut self, ctx: &yew::prelude::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Message::Init(edge_v) => {
-                self.edge_v = edge_v;
-                true
-            }
             Message::Commit(edge) => {
+                self.edge_v.push(edge.clone());
                 ctx.link().send_future(async move {
                     let _ = service::commit_edge(edge).await;
                     Message::Post(false)
@@ -110,18 +97,28 @@ impl yew::Component for HomePage {
                 false
             }
             Message::Post(b) => b,
-            Message::PostPull => {
+            Message::PostRefresh => {
+                let link = ctx.link().clone();
                 ctx.link().send_future(async move {
-                    match service::pull_edge_v().await {
-                        Ok(r) => Self::Message::Pull(r),
+                    let msg = match service::pull_edge_v().await {
+                        Ok(r) => Self::Message::Refresh(r),
                         Err(e) => Self::Message::Error(e),
-                    }
+                    };
+                    link.send_future(async move {
+                        yew::platform::time::sleep(Duration::from_millis(5000)).await;
+                        Self::Message::PostRefresh
+                    });
+                    msg
                 });
                 false
             }
-            Message::Pull(edge_v) => {
-                self.edge_v = edge_v;
-                true
+            Message::Refresh(edge_v) => {
+                if edge_v.len() > self.edge_v.len() {
+                    self.edge_v = edge_v;
+                    true
+                } else {
+                    false
+                }
             }
             Message::Clear => {
                 self.edge_v.clear();

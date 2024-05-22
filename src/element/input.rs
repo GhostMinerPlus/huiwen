@@ -1,4 +1,3 @@
-use wasm_bindgen::UnwrapThrowExt;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -41,9 +40,7 @@ impl yew::Component for Input {
         let class = classes!("input", props.classes.clone(),);
 
         let oninput = props.update.reform(|ev: web_sys::InputEvent| {
-            let input: HtmlInputElement = ev
-                .target_dyn_into()
-                .expect_throw("event target should be an input");
+            let input: HtmlInputElement = ev.target_dyn_into().unwrap();
             input.value()
         });
 

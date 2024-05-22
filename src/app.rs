@@ -6,6 +6,45 @@ use yew::{html, Callback, Context, Html};
 
 use crate::{component::Modal, element, err, router, service, util};
 
+fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Option<Html> {
+    let link = ctx.link().clone();
+    let on_error = Callback::from(move |e| {
+        link.send_message(Message::Error(e));
+    });
+    match e {
+        err::Error::Other(msg) => {
+            let link = ctx.link().clone();
+            let on_clear_error = Callback::from(move |_| {
+                link.send_message(Message::ClearError);
+            });
+            Some(html! {
+                <Modal on_close={on_clear_error}>
+                    <div style={"padding: 1em;background-color: red;width: 100%;"}>{"Error"}</div>
+                    <pre style={"padding: 1em;flex: 1;width: 100%;"}>{msg.clone()}</pre>
+                </Modal>
+            })
+        }
+        err::Error::NotLogin(_) => {
+            let link = ctx.link().clone();
+            let on_logined = Callback::from(move |_| {
+                link.send_message(Message::ClearError);
+            });
+            let link = ctx.link().clone();
+            let on_registered = Callback::from(move |_| {
+                link.send_message(Message::Error(err::Error::NotLogin(format!("need login"))));
+            });
+            Some(html! {
+                <element::LoginModal
+                    login_uri={"/service/edge/login"}
+                    register_uri={"/service/edge/register"}
+                    {on_error}
+                    {on_logined}
+                    {on_registered} />
+            })
+        }
+    }
+}
+
 // Public
 pub use page::*;
 
@@ -17,7 +56,7 @@ pub enum Message {
 
 pub struct Main {
     base_uri: String,
-    msg: Option<String>,
+    err_msg_op: Option<err::Error>,
 }
 
 impl yew::Component for Main {
@@ -25,32 +64,13 @@ impl yew::Component for Main {
 
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
-        let base_uri = match util::get_base_uri() {
-            Ok(rs) => match rs {
-                Some(rs) => {
-                    ctx.link().send_future(async {
-                        match service::get_version().await {
-                            Ok(version) => Self::Message::Init(version),
-                            Err(e) => Self::Message::Error(e),
-                        }
-                    });
-                    rs
-                }
-                None => {
-                    let e = err::Error::Other(format!("when create:\n\tfailed to get base uri"));
-                    ctx.link().send_message(Self::Message::Error(e));
-                    String::new()
-                }
-            },
-            Err(e) => {
-                ctx.link().send_message(Self::Message::Error(e));
-                String::new()
-            }
-        };
+    fn create(_: &Context<Self>) -> Self {
+        let base_uri = util::get_base_uri()
+            .expect("can not get base uri")
+            .expect("can not get base uri");
         Self {
             base_uri,
-            msg: None,
+            err_msg_op: None,
         }
     }
 
@@ -61,14 +81,7 @@ impl yew::Component for Main {
         let base_url = self.base_uri.clone();
         let link = ctx.link().clone();
         let menu_switch = Callback::from(move |key: String| {
-            let location = match util::get_location() {
-                Some(rs) => rs,
-                None => {
-                    let e = err::Error::Other(format!("when view\n:\t无法获取 location 实例"));
-                    link.send_message(Self::Message::Error(e));
-                    return;
-                }
-            };
+            let location = util::get_location().expect("can not get location");
             if let Err(e) = match key.as_str() {
                 "painting" => location.replace(&format!("{base_url}")),
                 _ => location.replace(&format!("{base_url}404")),
@@ -83,10 +96,11 @@ impl yew::Component for Main {
             link.send_message(Self::Message::Error(e));
         });
 
-        let link = ctx.link().clone();
-        let on_clear_error = Callback::from(move |_| {
-            link.send_message(Self::Message::ClearError);
-        });
+        let modal_op = if let Some(e) = &self.err_msg_op {
+            build_error_modal(ctx, e)
+        } else {
+            None
+        };
 
         html! {
             <div class={"main"}>
@@ -95,10 +109,8 @@ impl yew::Component for Main {
                     <element::Tree {tree} switch={menu_switch} classes={"main-content-menu"} />
                     <router::Router on_error={on_error} />
                 </div>
-                if self.msg.is_some() {
-                    <Modal close={on_clear_error}>
-                        <div style={"padding: 1em;"}>{self.msg.clone().unwrap()}</div>
-                    </Modal>
+                if modal_op.is_some() {
+                    {modal_op.unwrap()}
                 }
             </div>
         }
@@ -111,7 +123,10 @@ impl yew::Component for Main {
                 false
             }
             Message::Error(e) => {
-                if self.msg.is_some() {
+                if let Some(cur_err) = &self.err_msg_op {
+                    if e == *cur_err {
+                        return true;
+                    }
                     ctx.link().send_future(async {
                         yew::platform::time::sleep(Duration::from_millis(500)).await;
                         Self::Message::Error(e)
@@ -119,12 +134,13 @@ impl yew::Component for Main {
                     false
                 } else {
                     log::error!("{e}");
-                    self.msg = Some(e.to_string());
+                    self.err_msg_op = Some(e);
                     true
                 }
             }
             Message::ClearError => {
-                self.msg = None;
+                self.err_msg_op = None;
+                log::info!("clear error");
                 true
             }
         }
