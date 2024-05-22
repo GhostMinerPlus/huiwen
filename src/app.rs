@@ -11,14 +11,6 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
     let on_error = Callback::from(move |e| {
         link.send_message(Message::Error(e));
     });
-    let link = ctx.link().clone();
-    let on_logined = Callback::from(move |_| {
-        link.send_message(Message::ClearError);
-    });
-    let link = ctx.link().clone();
-    let on_registered = Callback::from(move |_| {
-        link.send_message(Message::Error(err::Error::NotLogin(format!("not login"))));
-    });
     match e {
         err::Error::Other(msg) => {
             let link = ctx.link().clone();
@@ -32,14 +24,24 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
                 </Modal>
             }
         }
-        err::Error::NotLogin(_) => html! {
-            <element::LoginModal
-                login_uri={"/service/edge/login"}
-                register_uri={"/service/edge/register"}
-                on_error={on_error.clone()}
-                {on_logined}
-                {on_registered} />
-        },
+        err::Error::NotLogin(_) => {
+            let link = ctx.link().clone();
+            let on_logined = Callback::from(move |_| {
+                link.send_message(Message::ClearError);
+            });
+            let link = ctx.link().clone();
+            let on_registered = Callback::from(move |_| {
+                link.send_message(Message::Error(err::Error::NotLogin(format!("not login"))));
+            });
+            html! {
+                <element::LoginModal
+                    login_uri={"/service/edge/login"}
+                    register_uri={"/service/edge/register"}
+                    {on_error}
+                    {on_logined}
+                    {on_registered} />
+            }
+        }
     }
 }
 
@@ -157,6 +159,7 @@ impl yew::Component for Main {
             }
             Message::ClearError => {
                 self.err_msg_op = None;
+                log::info!("clear error");
                 true
             }
         }
