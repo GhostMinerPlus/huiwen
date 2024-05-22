@@ -89,6 +89,7 @@ impl yew::Component for HomePage {
     fn update(&mut self, ctx: &yew::prelude::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Message::Commit(edge) => {
+                self.edge_v.push(edge.clone());
                 ctx.link().send_future(async move {
                     let _ = service::commit_edge(edge).await;
                     Message::Post(false)
