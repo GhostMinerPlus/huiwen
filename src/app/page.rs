@@ -104,7 +104,7 @@ impl yew::Component for HomePage {
                         Err(e) => Self::Message::Error(e),
                     };
                     link.send_future(async move {
-                        yew::platform::time::sleep(Duration::from_millis(500)).await;
+                        yew::platform::time::sleep(Duration::from_millis(5000)).await;
                         Self::Message::PostRefresh
                     });
                     msg
