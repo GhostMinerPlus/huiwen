@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use painting::point::Point;
 use yew::Callback;
 
@@ -15,9 +17,9 @@ pub struct Props {
 pub enum Message {
     Init(Vec<Vec<Point>>),
     Commit(Vec<Point>),
-    Pull(Vec<Vec<Point>>),
+    Refresh(Vec<Vec<Point>>),
     Post(bool),
-    PostPull,
+    PostRefresh,
     Clear,
     Error(err::Error),
     Bigger,
@@ -55,11 +57,6 @@ impl yew::Component for HomePage {
         });
 
         let link = ctx.link().clone();
-        let pull = Callback::from(move |_| {
-            link.send_message(Self::Message::PostPull);
-        });
-
-        let link = ctx.link().clone();
         let clear = Callback::from(move |_| {
             link.send_message(Self::Message::Clear);
         });
@@ -83,7 +80,6 @@ impl yew::Component for HomePage {
                 border={format!("1em solid transparent")}
                 justify_content={format!("space-between")}>
                 <Row height={format!("1.5em")}>
-                    <button onclick={pull}>{"Pull"}</button>
                     <button onclick={clear}>{"Clear"}</button>
                     <button onclick={bigger}>{"+"}</button>
                     <button onclick={smaller}>{"-"}</button>
@@ -100,6 +96,7 @@ impl yew::Component for HomePage {
         match msg {
             Message::Init(edge_v) => {
                 self.edge_v = edge_v;
+                ctx.link().send_message(Self::Message::PostRefresh);
                 true
             }
             Message::Commit(edge) => {
@@ -110,16 +107,22 @@ impl yew::Component for HomePage {
                 false
             }
             Message::Post(b) => b,
-            Message::PostPull => {
+            Message::PostRefresh => {
+                let link = ctx.link().clone();
                 ctx.link().send_future(async move {
-                    match service::pull_edge_v().await {
-                        Ok(r) => Self::Message::Pull(r),
+                    let msg = match service::pull_edge_v().await {
+                        Ok(r) => Self::Message::Refresh(r),
                         Err(e) => Self::Message::Error(e),
-                    }
+                    };
+                    link.send_future(async move {
+                        yew::platform::time::sleep(Duration::from_millis(500)).await;
+                        Self::Message::PostRefresh
+                    });
+                    msg
                 });
                 false
             }
-            Message::Pull(edge_v) => {
+            Message::Refresh(edge_v) => {
                 self.edge_v = edge_v;
                 true
             }

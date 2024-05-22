@@ -64,29 +64,10 @@ impl yew::Component for Main {
 
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
-        let base_uri = match util::get_base_uri() {
-            Ok(rs) => match rs {
-                Some(rs) => {
-                    ctx.link().send_future(async {
-                        match service::get_version().await {
-                            Ok(version) => Self::Message::Init(version),
-                            Err(e) => Self::Message::Error(e),
-                        }
-                    });
-                    rs
-                }
-                None => {
-                    let e = err::Error::Other(format!("when create:\n\tfailed to get base uri"));
-                    ctx.link().send_message(Self::Message::Error(e));
-                    String::new()
-                }
-            },
-            Err(e) => {
-                ctx.link().send_message(Self::Message::Error(e));
-                String::new()
-            }
-        };
+    fn create(_: &Context<Self>) -> Self {
+        let base_uri = util::get_base_uri()
+            .expect("can not get base uri")
+            .expect("can not get base uri");
         Self {
             base_uri,
             err_msg_op: None,
@@ -100,14 +81,7 @@ impl yew::Component for Main {
         let base_url = self.base_uri.clone();
         let link = ctx.link().clone();
         let menu_switch = Callback::from(move |key: String| {
-            let location = match util::get_location() {
-                Some(rs) => rs,
-                None => {
-                    let e = err::Error::Other(format!("when view\n:\t无法获取 location 实例"));
-                    link.send_message(Self::Message::Error(e));
-                    return;
-                }
-            };
+            let location = util::get_location().expect("can not get location");
             if let Err(e) = match key.as_str() {
                 "painting" => location.replace(&format!("{base_url}")),
                 _ => location.replace(&format!("{base_url}404")),
