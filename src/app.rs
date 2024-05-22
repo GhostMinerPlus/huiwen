@@ -7,6 +7,18 @@ use yew::{html, Callback, Context, Html};
 use crate::{component::Modal, element, err, router, service, util};
 
 fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
+    let link = ctx.link().clone();
+    let on_error = Callback::from(move |e| {
+        link.send_message(Message::Error(e));
+    });
+    let link = ctx.link().clone();
+    let on_logined = Callback::from(move |_| {
+        link.send_message(Message::ClearError);
+    });
+    let link = ctx.link().clone();
+    let on_registered = Callback::from(move |_| {
+        link.send_message(Message::Error(err::Error::NotLogin(format!("not login"))));
+    });
     match e {
         err::Error::Other(msg) => {
             let link = ctx.link().clone();
@@ -14,14 +26,19 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
                 link.send_message(Message::ClearError);
             });
             html! {
-                <Modal close={on_clear_error}>
+                <Modal on_close={on_clear_error}>
                     <div style={"padding: 1em;background-color: red;width: 100%;"}>{"Error"}</div>
                     <pre style={"padding: 1em;flex: 1;width: 100%;"}>{msg.clone()}</pre>
                 </Modal>
             }
         }
-        err::Error::NotLogin => html! {
-            <element::LoginModal login_uri={"/service/edge/login"} register_uri={"/service/edge/register"} />
+        err::Error::NotLogin(_) => html! {
+            <element::LoginModal
+                login_uri={"/service/edge/login"}
+                register_uri={"/service/edge/register"}
+                on_error={on_error.clone()}
+                {on_logined}
+                {on_registered} />
         },
     }
 }

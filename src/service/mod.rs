@@ -44,7 +44,7 @@ async fn execute(script_tree: &ScriptTree) -> err::Result<json::JsonValue> {
         ))?;
     match res.status() {
         401 => {
-            return Err(err::Error::NotLogin);
+            return Err(err::Error::NotLogin(format!("not login")));
         }
         500 => {
             log::warn!("when execute:\n\t{rs}");

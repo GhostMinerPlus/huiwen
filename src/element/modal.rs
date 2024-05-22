@@ -27,6 +27,13 @@ pub struct ModalProps {
     pub login_uri: String,
     #[prop_or_default]
     pub register_uri: String,
+
+    #[prop_or_default]
+    pub on_error: Callback<err::Error>,
+    #[prop_or_default]
+    pub on_logined: Callback<()>,
+    #[prop_or_default]
+    pub on_registered: Callback<()>,
 }
 
 pub struct LoginModal {
@@ -142,8 +149,28 @@ impl yew::Component for LoginModal {
                 });
                 false
             }
-            Msg::Login(rs) => true,
-            Msg::Register(rs) => true,
+            Msg::Login(rs) => match rs {
+                Ok(_) => {
+                    ctx.props().on_logined.emit(());
+                    false
+                }
+                Err(e) => {
+                    log::warn!("{e}");
+                    ctx.props().on_error.emit(err::Error::NotLogin(format!("wrong email or password")));
+                    false
+                }
+            },
+            Msg::Register(rs) => match rs {
+                Ok(_) => {
+                    ctx.props().on_registered.emit(());
+                    false
+                }
+                Err(e) => {
+                    log::warn!("{e}");
+                    ctx.props().on_error.emit(err::Error::NotLogin(format!("email already register")));
+                    false
+                }
+            }
         }
     }
 }
