@@ -15,7 +15,6 @@ pub struct Props {
 }
 
 pub enum Message {
-    Init(Vec<Vec<Point>>),
     Commit(Vec<Point>),
     Refresh(Vec<Vec<Point>>),
     Post(bool),
@@ -38,12 +37,7 @@ impl yew::Component for HomePage {
     type Properties = Props;
 
     fn create(ctx: &yew::Context<Self>) -> Self {
-        ctx.link().send_future(async {
-            match service::pull_edge_v().await {
-                Ok(r) => Self::Message::Init(r),
-                Err(e) => Self::Message::Error(e),
-            }
-        });
+        ctx.link().send_message(Self::Message::PostRefresh);
         Self {
             edge_v: Vec::new(),
             scale: 62,
@@ -94,11 +88,6 @@ impl yew::Component for HomePage {
 
     fn update(&mut self, ctx: &yew::prelude::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Message::Init(edge_v) => {
-                self.edge_v = edge_v;
-                ctx.link().send_message(Self::Message::PostRefresh);
-                true
-            }
             Message::Commit(edge) => {
                 ctx.link().send_future(async move {
                     let _ = service::commit_edge(edge).await;
