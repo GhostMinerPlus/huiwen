@@ -31,7 +31,7 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Option<Html> {
             });
             let link = ctx.link().clone();
             let on_registered = Callback::from(move |_| {
-                link.send_message(Message::Error(err::Error::NotLogin(format!("not login"))));
+                link.send_message(Message::Error(err::Error::NotLogin(format!("need login"))));
             });
             Some(html! {
                 <element::LoginModal
@@ -125,7 +125,7 @@ impl yew::Component for Main {
             Message::Error(e) => {
                 if let Some(cur_err) = &self.err_msg_op {
                     if e == *cur_err {
-                        return false;
+                        return true;
                     }
                     ctx.link().send_future(async {
                         yew::platform::time::sleep(Duration::from_millis(500)).await;
