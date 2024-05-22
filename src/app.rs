@@ -6,7 +6,7 @@ use yew::{html, Callback, Context, Html};
 
 use crate::{component::Modal, element, err, router, service, util};
 
-fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
+fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Option<Html> {
     let link = ctx.link().clone();
     let on_error = Callback::from(move |e| {
         link.send_message(Message::Error(e));
@@ -17,12 +17,12 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
             let on_clear_error = Callback::from(move |_| {
                 link.send_message(Message::ClearError);
             });
-            html! {
+            Some(html! {
                 <Modal on_close={on_clear_error}>
                     <div style={"padding: 1em;background-color: red;width: 100%;"}>{"Error"}</div>
                     <pre style={"padding: 1em;flex: 1;width: 100%;"}>{msg.clone()}</pre>
                 </Modal>
-            }
+            })
         }
         err::Error::NotLogin(_) => {
             let link = ctx.link().clone();
@@ -33,14 +33,14 @@ fn build_error_modal(ctx: &Context<Main>, e: &err::Error) -> Html {
             let on_registered = Callback::from(move |_| {
                 link.send_message(Message::Error(err::Error::NotLogin(format!("not login"))));
             });
-            html! {
+            Some(html! {
                 <element::LoginModal
                     login_uri={"/service/edge/login"}
                     register_uri={"/service/edge/register"}
                     {on_error}
                     {on_logined}
                     {on_registered} />
-            }
+            })
         }
     }
 }
@@ -122,7 +122,11 @@ impl yew::Component for Main {
             link.send_message(Self::Message::Error(e));
         });
 
-        let modal_op = self.err_msg_op.as_ref().map(|e| build_error_modal(ctx, e));
+        let modal_op = if let Some(e) = &self.err_msg_op {
+            build_error_modal(ctx, e)
+        } else {
+            None
+        };
 
         html! {
             <div class={"main"}>
@@ -145,7 +149,10 @@ impl yew::Component for Main {
                 false
             }
             Message::Error(e) => {
-                if self.err_msg_op.is_some() {
+                if let Some(cur_err) = &self.err_msg_op {
+                    if e == *cur_err {
+                        return false;
+                    }
                     ctx.link().send_future(async {
                         yew::platform::time::sleep(Duration::from_millis(500)).await;
                         Self::Message::Error(e)
