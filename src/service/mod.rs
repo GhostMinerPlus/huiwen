@@ -63,16 +63,6 @@ pub struct ScriptTree {
     pub next_v: Vec<ScriptTree>,
 }
 
-pub async fn get_version() -> err::Result<String> {
-    let rs = execute(&ScriptTree {
-        script: "$->$output = = huiwen->version _".to_string(),
-        name: format!("version"),
-        next_v: vec![],
-    })
-    .await?;
-    Ok(rs["version"][0].as_str().unwrap().to_string())
-}
-
 pub async fn commit_edge(edge: Vec<Point>) -> err::Result<()> {
     let mut script = format!("$->$edge = = ? _");
 
